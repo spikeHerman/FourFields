@@ -1,4 +1,5 @@
 
+import datetime 
 
 import Tkinter as tk
 import tkMessageBox
@@ -535,14 +536,90 @@ class Application(tk.Frame):
         self.total_hours3.grid(row=3, column=2)
         self.total_hours4 = tk.Entry(self.logout_frame, width=3)
         self.total_hours4.grid(row=4, column=2)
-        
+
+        self.s_sep1 = tk.Label(self.logout_frame, text="--")
+        self.s_sep1.grid(row=1, column=3)
+        self.s_sep2 = tk.Label(self.logout_frame, text="--")
+        self.s_sep2.grid(row=2, column=3)
+        self.s_sep3 = tk.Label(self.logout_frame, text="--")
+        self.s_sep3.grid(row=3, column=3)
+        self.s_sep4 = tk.Label(self.logout_frame, text="--")
+        self.s_sep4.grid(row=4, column=3)
+                               
+        self.start_hour_lbl = tk.Label(self.logout_frame, text="Start")
+        self.start_hour_lbl.grid(row=0, column=4, columnspan=3)
+        self.start_hour1 = tk.Entry(self.logout_frame, width=2)
+        self.start_hour1.grid(row=1, column=4)
+        self.start_hour2 = tk.Entry(self.logout_frame, width=2)
+        self.start_hour2.grid(row=2, column=4) 
+        self.start_hour3 = tk.Entry(self.logout_frame, width=2)
+        self.start_hour3.grid(row=3, column=4) 
+        self.start_hour4 = tk.Entry(self.logout_frame, width=2)
+        self.start_hour4.grid(row=4, column=4) 
+ 
+        self.start_sep1 = tk.Label(self.logout_frame, text=":")
+        self.start_sep1.grid(row=1, column=5)
+        self.start_sep2 = tk.Label(self.logout_frame, text=":")
+        self.start_sep2.grid(row=2, column=5)
+        self.start_sep3 = tk.Label(self.logout_frame, text=":")
+        self.start_sep3.grid(row=3, column=5)
+        self.start_sep4 = tk.Label(self.logout_frame, text=":")
+        self.start_sep4.grid(row=4, column=5)
+
+        self.start_min1 = tk.Entry(self.logout_frame, width=2)
+        self.start_min1.grid(row=1, column=6) 
+        self.start_min2 = tk.Entry(self.logout_frame, width=2)
+        self.start_min2.grid(row=2, column=6) 
+        self.start_min3 = tk.Entry(self.logout_frame, width=2)
+        self.start_min3.grid(row=3, column=6) 
+        self.start_min4 = tk.Entry(self.logout_frame, width=2)
+        self.start_min4.grid(row=4, column=6) 
+
+        self.e_sep1 = tk.Label(self.logout_frame, text="--")
+        self.e_sep1.grid(row=1, column=7)
+        self.e_sep2 = tk.Label(self.logout_frame, text="--")
+        self.e_sep2.grid(row=2, column=7)
+        self.e_sep3 = tk.Label(self.logout_frame, text="--")
+        self.e_sep3.grid(row=3, column=7)
+        self.e_sep4 = tk.Label(self.logout_frame, text="--")
+        self.e_sep4.grid(row=4, column=7)
+
+        self.end_hour_lbl = tk.Label(self.logout_frame, text="End")
+        self.end_hour_lbl.grid(row=0, column=8, columnspan=3)
+        self.end_hour1 = tk.Entry(self.logout_frame, width=2)
+        self.end_hour1.grid(row=1, column=8) 
+        self.end_hour2 = tk.Entry(self.logout_frame, width=2)
+        self.end_hour2.grid(row=2, column=8) 
+        self.end_hour3 = tk.Entry(self.logout_frame, width=2)
+        self.end_hour3.grid(row=3, column=8) 
+        self.end_hour4 = tk.Entry(self.logout_frame, width=2)
+        self.end_hour4.grid(row=4, column=8) 
+ 
+        self.end_sep1 = tk.Label(self.logout_frame, text=":")
+        self.end_sep1.grid(row=1, column=9)
+        self.end_sep2 = tk.Label(self.logout_frame, text=":")
+        self.end_sep2.grid(row=2, column=9)
+        self.end_sep3 = tk.Label(self.logout_frame, text=":")
+        self.end_sep3.grid(row=3, column=9)
+        self.end_sep4 = tk.Label(self.logout_frame, text=":")
+        self.end_sep4.grid(row=4, column=9)
+
+        self.end_min1 = tk.Entry(self.logout_frame, width=2)
+        self.end_min1.grid(row=1, column=10) 
+        self.end_min2 = tk.Entry(self.logout_frame, width=2)
+        self.end_min2.grid(row=2, column=10) 
+        self.end_min3 = tk.Entry(self.logout_frame, width=2)
+        self.end_min3.grid(row=3, column=10) 
+        self.end_min4 = tk.Entry(self.logout_frame, width=2)
+        self.end_min4.grid(row=4, column=10) 
+
         self.hours_list = [self.total_hours1,
                            self.total_hours2,
                            self.total_hours3, 
                            self.total_hours4]
 
         self.commit_button_frame = tk.Frame(self.logout_frame, padx=6, pady=6)
-        self.commit_button_frame.grid(row=5, column=0 , columnspan=3)
+        self.commit_button_frame.grid(row=6, column=0 , columnspan=3)
         self.commit_hours_button = tk.Button(self.commit_button_frame,
                                              text='Commit hours and exit porgram.',
                                              command=self.commit_shift)
@@ -570,7 +647,6 @@ class Application(tk.Frame):
                 checked_shift_list.append((program, hours))
             except IndexError as e:                
                 pass
-        print checked_shift_list
         return checked_shift_list
         
     def create_shift_list(self, shift_list):
@@ -581,21 +657,36 @@ class Application(tk.Frame):
                 return False
         return shift_list
 
+    def get_start_end_time(self):
+        s_hour = int(self.start_hour.get())
+        s_min  = int(self.start_minutes.get())
+        start_time = datetime.time(s_hour, s_min)
+        e_hour = int(self.end_hour.get())
+        e_min = int(self.end_minutes.get())
+        end_time = datetime.time(e_hour, e_min)
+        return start_time, end_time
+            
     @no_connection
     def commit_shift(self):
-        shift_list = self.create_shift_list(self.get_shift_hours())
-        if shift_list == []:
+        try:
+            shift_list = self.create_shift_list(self.get_shift_hours())
+            if shift_list == []:
+                tkMessageBox.showerror('Shift Reporting Error',
+                                       'You did not choose any program.')
+            elif shift_list == False:
+                tkMessageBox.showerror('Shift Reporting Error',
+                                       'Wrong shift hours input.')
+            else:
+                if tkMessageBox.askokcancel('Reporting your shift',
+                                            'Report hours and exit?'):
+                    time = self.get_start_end_time()
+                    data = (shift_list, time)
+                    self.operator.update_shift(data)
+                    self.operator.update_calls_made()
+                    self.quit()
+        except ValueError as e:
             tkMessageBox.showerror('Shift Reporting Error',
-                                   'You did not choose any program.')
-        elif shift_list == False:
-            tkMessageBox.showerror('Shift Reporting Error',
-                                   'Wrong shift hours input.')
-        else:
-            if tkMessageBox.askokcancel('Reporting your shift',
-                                        'Report hours and exit?'):
-                self.operator.update_shift(shift_list)
-                self.operator.update_calls_made()
-                self.quit()
+                                   'Wrong start time or end time input.')
 
 if __name__=='__main__':
     master = tk.Tk()
