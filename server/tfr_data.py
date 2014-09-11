@@ -947,17 +947,19 @@ def set_supporter_result(operator_id, supporter_id, program_name, data):
     ins = result_table.insert().values(form)
     conn.execute(ins)
 
-def report_hours(operator_id, program_name, hours):
+def report_hours(operator_id, program_name, hours, start_time, end_time):
     date = datetime.date.today()
-    form = (None, operator_id, hours, program_name, date)
+    form = (None, operator_id, hours, program_name, date, start_time, 
+            end_time)
     ins = tfroperatorreport.insert().values(form)
     conn.execute(ins)
                       
 def report_shift(operator_id, data):
     reported_hours = data
-    for program, hours in reported_hours:
-        report_hours(operator_id, program, hours)
-
+    print reported_hours
+    for program, hours, start_time, end_time in reported_hours:
+        report_hours(operator_id, program, hours, start_time, end_time)
+        
 def report_calls_made(operator_id, data):
     calls_made = data
     date = datetime.date.today()

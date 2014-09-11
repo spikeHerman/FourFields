@@ -525,6 +525,7 @@ class Application(tk.Frame):
                                 command=lambda: self.clear(self.prog_list4))
         self.clear4.grid(row=4, column=1)
         
+        ### Start and end time of shift
         
         self.total_hours_lbl = tk.Label(self.logout_frame, text="Hours")
         self.total_hours_lbl.grid(row=0, column=2)
@@ -613,10 +614,15 @@ class Application(tk.Frame):
         self.end_min4 = tk.Entry(self.logout_frame, width=2)
         self.end_min4.grid(row=4, column=10) 
 
-        self.hours_list = [self.total_hours1,
-                           self.total_hours2,
+        self.hours_list = [self.total_hours1, 
+                           self.total_hours2, 
                            self.total_hours3, 
                            self.total_hours4]
+        
+        self.start_end_list = [(self.start_hour1, self.start_min1, self.end_hour1, self.end_min1),
+                               (self.start_hour2, self.start_min2, self.end_hour2, self.end_min2),
+                               (self.start_hour3, self.start_min3, self.end_hour3, self.end_min3),
+                               (self.start_hour4, self.start_min4, self.end_hour4, self.end_min4)]
 
         self.commit_button_frame = tk.Frame(self.logout_frame, padx=6, pady=6)
         self.commit_button_frame.grid(row=6, column=0 , columnspan=3)
@@ -625,7 +631,7 @@ class Application(tk.Frame):
                                              command=self.commit_shift)
         self.commit_hours_button.grid()
         self.fill_program_lists()
-
+        
     def clear(self, pr_list):
         pr_list.selection_clear(0, tk.END)
 
@@ -636,57 +642,56 @@ class Application(tk.Frame):
             self.prog_list3.insert(tk.END, program)
             self.prog_list4.insert(tk.END, program)
     
+    
     def get_shift_hours(self):
-        shifts_list = zip(self.prog_list, self.hours_list)
+        shifts_list = zip(self.prog_list, self.hours_list, self.start_end_list)
         checked_shift_list = []
-        for prog, hour in shifts_list:
+        for prog, hour, start_end in shifts_list:
             try:
                 selection = int(prog.curselection()[0])
                 program = prog.get(selection)
                 hours = hour.get()
-                checked_shift_list.append((program, hours))
+                start_hour, start_min, end_hour, end_min = start_end
+                s_hour = start_hour.get()
+                s_min = start_min.get()
+                e_hour = end_hour.get()
+                e_min = end_min.get()
+                checked_shift_list.append((program, hours, s_hour, s_min, e_hour, e_min))
             except IndexError as e:                
                 pass
         return checked_shift_list
         
     def create_shift_list(self, shift_list):
-        for prog, hour in shift_list:
+        returned_list = []
+        for prog, hour, s_hour, s_min, e_hour, e_min in shift_list:
             try:
                 hour = int(hour)
-            except ValueError:
+                s_hour = int(s_hour)
+                s_min = int(s_min)
+                e_hour = int(e_hour)
+                e_min = int(e_min)
+                s_time = datetime.time(s_hour, s_min)
+                e_time = datetime.time(e_hour, e_min)
+                returned_list.append((prog, hour, s_time, e_time))
+            except ValueError as e:
                 return False
-        return shift_list
+        return returned_list
 
-    def get_start_end_time(self):
-        s_hour = int(self.start_hour.get())
-        s_min  = int(self.start_minutes.get())
-        start_time = datetime.time(s_hour, s_min)
-        e_hour = int(self.end_hour.get())
-        e_min = int(self.end_minutes.get())
-        end_time = datetime.time(e_hour, e_min)
-        return start_time, end_time
-            
     @no_connection
     def commit_shift(self):
-        try:
-            shift_list = self.create_shift_list(self.get_shift_hours())
-            if shift_list == []:
-                tkMessageBox.showerror('Shift Reporting Error',
-                                       'You did not choose any program.')
-            elif shift_list == False:
-                tkMessageBox.showerror('Shift Reporting Error',
-                                       'Wrong shift hours input.')
-            else:
-                if tkMessageBox.askokcancel('Reporting your shift',
-                                            'Report hours and exit?'):
-                    time = self.get_start_end_time()
-                    data = (shift_list, time)
-                    self.operator.update_shift(data)
-                    self.operator.update_calls_made()
-                    self.quit()
-        except ValueError as e:
+        shift_list = self.create_shift_list(self.get_shift_hours())
+        if shift_list == []:
             tkMessageBox.showerror('Shift Reporting Error',
-                                   'Wrong start time or end time input.')
+                                   'You did not choose any program.')
+        elif shift_list == False:
+            tkMessageBox.showerror('Shift Reporting Error',
+                                   'Wrong shift hours input.')
+        else:
+            if tkMessageBox.askokcancel('Reporting your shift',
+                                        'Report hours and exit?'):
+                self.operator.update_shift(shift_list)
+                self.operator.update_calls_made()
+                self.quit()
 
 if __name__=='__main__':
     master = tk.Tk()
