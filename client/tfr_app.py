@@ -100,11 +100,23 @@ class Application(tk.Frame):
         self.program_list = tk.Listbox(self.initial_frame, height=list_height,
                                        exportselection=0)
         self.program_list.grid(row=3, column=0, columnspan=2)
-
+        
+        #remaining supporters list
+        self.supp_list_lbl = tk.Label(self.initial_frame,
+                                      text="#",
+                                      font=self.BOLD,
+                                      background=INTERFACE_COLOR)
+        self.supp_list_lbl.grid(row=2, column=3)
+        self.supp_list = tk.Listbox(self.initial_frame, height=list_height,
+                                       exportselection=0, width=4)
+        self.supp_list.grid(row=3, column=3)
+        
         # populate program list
         self.program_list.height = list_height
         for program in self.operator.active_programs:
+            number_of_sup = self.operator.remaining_sups[program]
             self.program_list.insert(tk.END, program)
+            self.supp_list.insert(tk.END, number_of_sup)
             
         # program list button
         self.button_frame = tk.Frame(self.initial_frame, pady=6,
@@ -604,7 +616,7 @@ class Application(tk.Frame):
         self.end_sep3.grid(row=3, column=9)
         self.end_sep4 = tk.Label(self.logout_frame, text=":")
         self.end_sep4.grid(row=4, column=9)
-
+        
         self.end_min1 = tk.Entry(self.logout_frame, width=2)
         self.end_min1.grid(row=1, column=10) 
         self.end_min2 = tk.Entry(self.logout_frame, width=2)
@@ -614,6 +626,28 @@ class Application(tk.Frame):
         self.end_min4 = tk.Entry(self.logout_frame, width=2)
         self.end_min4.grid(row=4, column=10) 
 
+        self.d_sep1 = tk.Label(self.logout_frame, text="--")
+        self.d_sep1.grid(row=1, column=11)
+        self.d_sep2 = tk.Label(self.logout_frame, text="--")
+        self.d_sep2.grid(row=2, column=11)
+        self.d_sep3 = tk.Label(self.logout_frame, text="--")
+        self.d_sep3.grid(row=3, column=11)
+        self.d_sep4 = tk.Label(self.logout_frame, text="--")
+        self.d_sep4.grid(row=4, column=11)
+        
+
+        self.device_lbl = tk.Label(self.logout_frame, text="Phone")
+        self.device_lbl.grid(row=0, column=12)
+        self.device1_entry = tk.Entry(self.logout_frame, width=4)
+        self.device1_entry.grid(row=1, column=12)
+        self.device2_entry = tk.Entry(self.logout_frame, width=4)
+        self.device2_entry.grid(row=2, column=12)
+        self.device3_entry = tk.Entry(self.logout_frame, width=4)
+        self.device3_entry.grid(row=3, column=12)
+        self.device4_entry = tk.Entry(self.logout_frame, width=4)
+        self.device4_entry.grid(row=4, column=12)
+
+        
         self.hours_list = [self.total_hours1, 
                            self.total_hours2, 
                            self.total_hours3, 
@@ -624,10 +658,15 @@ class Application(tk.Frame):
                                (self.start_hour3, self.start_min3, self.end_hour3, self.end_min3),
                                (self.start_hour4, self.start_min4, self.end_hour4, self.end_min4)]
 
+        self.device_list = [self.device1_entry,
+                            self.device2_entry,
+                            self.device3_entry,
+                            self.device4_entry]
+
         self.commit_button_frame = tk.Frame(self.logout_frame, padx=6, pady=6)
         self.commit_button_frame.grid(row=6, column=0 , columnspan=3)
         self.commit_hours_button = tk.Button(self.commit_button_frame,
-                                             text='Commit hours and exit porgram.',
+                                             text='Commit and exit porgram.',
                                              command=self.commit_shift)
         self.commit_hours_button.grid()
         self.fill_program_lists()
@@ -644,9 +683,9 @@ class Application(tk.Frame):
     
     
     def get_shift_hours(self):
-        shifts_list = zip(self.prog_list, self.hours_list, self.start_end_list)
+        shifts_list = zip(self.prog_list, self.hours_list, self.start_end_list, self.device_list)
         checked_shift_list = []
-        for prog, hour, start_end in shifts_list:
+        for prog, hour, start_end, dev in shifts_list:
             try:
                 selection = int(prog.curselection()[0])
                 program = prog.get(selection)
@@ -656,14 +695,21 @@ class Application(tk.Frame):
                 s_min = start_min.get()
                 e_hour = end_hour.get()
                 e_min = end_min.get()
-                checked_shift_list.append((program, hours, s_hour, s_min, e_hour, e_min))
+                device = dev.get()
+                checked_shift_list.append((program, hours, s_hour, s_min, e_hour, e_min, device))
             except IndexError as e:                
                 pass
         return checked_shift_list
-        
+    
+    def __check_dev(self, dev):
+        FIRST = 150
+        LAST = 157
+        if dev not in range(FIRST, LAST):
+            raise op_exceptions.WrongDeviceError('Wrong device number')
+
     def create_shift_list(self, shift_list):
         returned_list = []
-        for prog, hour, s_hour, s_min, e_hour, e_min in shift_list:
+        for prog, hour, s_hour, s_min, e_hour, e_min, dev in shift_list:
             try:
                 hour = int(hour)
                 s_hour = int(s_hour)
@@ -672,9 +718,13 @@ class Application(tk.Frame):
                 e_min = int(e_min)
                 s_time = datetime.time(s_hour, s_min)
                 e_time = datetime.time(e_hour, e_min)
-                returned_list.append((prog, hour, s_time, e_time))
+                device = int(dev)
+                self.__check_dev(device)
+                returned_list.append((prog, hour, s_time, e_time, device))
             except ValueError as e:
                 return False
+            except op_exceptions.WrongDeviceError as e:
+                return 'dev'
         return returned_list
 
     @no_connection
@@ -685,7 +735,10 @@ class Application(tk.Frame):
                                    'You did not choose any program.')
         elif shift_list == False:
             tkMessageBox.showerror('Shift Reporting Error',
-                                   'Wrong shift hours input.')
+                                   'Wrong shift input.')
+        elif shift_list == 'dev':
+            tkMessageBox.showerror('Shift Reporting Error',
+                                   'Wrong device input. Value must be between 150-156')
         else:
             if tkMessageBox.askokcancel('Reporting your shift',
                                         'Report hours and exit?'):

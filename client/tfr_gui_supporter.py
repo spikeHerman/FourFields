@@ -111,7 +111,7 @@ class TFRSupporterForm(tk.Canvas):
             return True
         else: 
             return False
-
+    
     def create_checkbuttons_list(self):
         """Create a list of all the checkbuttons in the Supporter Form.
     
@@ -273,7 +273,25 @@ class TFRSupporterForm(tk.Canvas):
             return tuple(changes)
         else:
             return None
-    
+
+    ### Needs FIXING   
+    # def check_dd_onspot(self):
+    #     """Check if requirements of DD on spot are met.
+        
+    #     Requirements are met if IBAN is given."""
+    #     answer = self.check_and_get_result()
+    #     print answer
+    #     print "22 - TFR DD on spot"
+    #     # CBFinanceList[7] is the Iban checkbutton in the interface.
+    #     ch, check_var, entr_var, entr = self.CBFinanceList[7]
+    #     print check_var.get()
+    #     if answer=="22 - TFR DD on Spot":
+    #         if check_var.get()==0:
+    #             #Return false if no Iban number has been given
+    #             return False
+    #     return True
+                
+            
     def check_and_get_result(self):
         """Get the result chosen by the operator."""
         if self.interactions.interactions_list.curselection():
@@ -323,6 +341,8 @@ class TFRSupporterForm(tk.Canvas):
                                          self.operator.chosen_program,
                                          changes)
             self.highlight_changes(self.CBFinanceList)
+    
+    
 
     def __is_entry_list_invalid(self, entry_list):
         max_entry_length = 66
@@ -370,8 +390,12 @@ class TFRSupporterForm(tk.Canvas):
                                                            "This supporter has already an interaction commited. \
                                                            You can only commit financial changes.")
                                 else:
+                                    #if self.check_dd_onspot():
                                     self.do_all_finance_changes()
                                     self.operator.activate_has_result()
+                                    #else:
+                                    #    tkMessageBox.showerror('Commit changes',
+                                    #                           'IBAN or Credit card is required to commit an On Spot Answer.')
                             else:
                                 self.do_all_finance_changes()
                         else:
@@ -380,6 +404,7 @@ class TFRSupporterForm(tk.Canvas):
         else:
             tkMessageBox.showerror('Commit changes',
                                    'There is no active supporter, no data to submit.')
+
     @no_connection
     def commit_contact_button(self):
         if self.check_supporter_exists():

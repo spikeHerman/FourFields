@@ -54,12 +54,13 @@ tfroperators = meta.tables['tfroperators']
 tfroperatorreport = meta.tables['tfroperatorreport']
 tfrcallsreport = meta.tables['tfrcallsreport']
 
-# Shifts --Not yet used--
-tfrregrescccshift = meta.tables['tfrregrescccshift']
-tfrregrescddshift = meta.tables['tfrregrescddshift']
-tfrexpccshift     = meta.tables['tfrexpccshift']
-tfrrtshift        = meta.tables['tfrrtshift']
-tfrsleepersshift  = meta.tables['tfrsleepersshift']
+# DEPRECATED
+# # Shifts --Not yet used--
+# tfrregrescccshift = meta.tables['tfrregrescccshift']
+# tfrregrescddshift = meta.tables['tfrregrescddshift']
+# tfrexpccshift     = meta.tables['tfrexpccshift']
+# tfrrtshift        = meta.tables['tfrrtshift']
+# tfrsleepersshift  = meta.tables['tfrsleepersshift']
 
 # Results
 tfrothersresults = meta.tables['tfrothersresults']
@@ -78,29 +79,31 @@ results_dict = {'tfrregresccc':tfrccresults,
                 'tfrothers':tfrothersresults,
                 'tfrwt':tfrwtresults}
 
-# Scheduled calls
-tfrsleepers_temp_sched  = meta.tables['tfrsleepers_temp_sched']
-tfrrt_temp_sched        = meta.tables['tfrrt_temp_sched']
-tfrexpcc_temp_sched     = meta.tables['tfrexpcc_temp_sched']
-tfrregresccc_temp_sched = meta.tables['tfrregresccc_temp_sched']
-tfrregrescdd_temp_sched = meta.tables['tfrregrescdd_temp_sched']
-tfrothers_temp_sched    = meta.tables['tfrothers_temp_sched']
-tfrwt_temp_sched        = meta.tables['tfrwt_temp_sched']
+# DEPRECATED
+# # Scheduled calls
+# tfrsleepers_temp_sched  = meta.tables['tfrsleepers_temp_sched']
+# tfrrt_temp_sched        = meta.tables['tfrrt_temp_sched']
+# tfrexpcc_temp_sched     = meta.tables['tfrexpcc_temp_sched']
+# tfrregresccc_temp_sched = meta.tables['tfrregresccc_temp_sched']
+# tfrregrescdd_temp_sched = meta.tables['tfrregrescdd_temp_sched']
+# tfrothers_temp_sched    = meta.tables['tfrothers_temp_sched']
+# tfrwt_temp_sched        = meta.tables['tfrwt_temp_sched']
 
-scheduled_dict = {'tfrregresccc':tfrregresccc_temp_sched,
-                  'tfrregrescdd':tfrregrescdd_temp_sched,
-                  'tfrrt':tfrrt_temp_sched,
-                  'tfrexpcc':tfrexpcc_temp_sched,
-                  'tfrsleepers':tfrsleepers_temp_sched,
-                  'tfrothers':tfrothers_temp_sched,
-                  'tfrwt':tfrwt_temp_sched}
+# DEPRECATED
+# scheduled_dict = {'tfrregresccc':tfrregresccc_temp_sched,
+#                   'tfrregrescdd':tfrregrescdd_temp_sched,
+#                   'tfrrt':tfrrt_temp_sched,
+#                   'tfrexpcc':tfrexpcc_temp_sched,
+#                   'tfrsleepers':tfrsleepers_temp_sched,
+#                   'tfrothers':tfrothers_temp_sched,
+#                   'tfrwt':tfrwt_temp_sched}
 
-
-shift_calls = {'tfrregresccc':tfrregrescccshift,
-               'tfrregrescdd':tfrregrescddshift,
-               'tfrrt':tfrrtshift,
-               'tfrexpcc':tfrexpccshift,
-               'tfrsleepers':tfrsleepersshift}
+# DEPRECATED
+# shift_calls = {'tfrregresccc':tfrregrescccshift,
+#                'tfrregrescdd':tfrregrescddshift,
+#                'tfrrt':tfrrtshift,
+#                'tfrexpcc':tfrexpccshift,
+#                'tfrsleepers':tfrsleepersshift}
 
 tfrscheduledcalls = meta.tables['tfrscheduledcalls']
 tfrcontactchanges = meta.tables['tfrcontactchanges']
@@ -137,6 +140,7 @@ def active_program_list():
     result = conn.execute(s)
     return [row[tfrprograms.c.name] for row in result]
 
+
 ### ACTIVe PROGRAMS AND OPERATOR/PASSWORD DICTIONARY
 active_programs = active_program_list()
 op_pass_dict    = operator_dict()
@@ -150,6 +154,17 @@ def supporters_proxy(program_name):
         where(sql.and_(program.c.has_result=='0', program.c.has_schedule=='0'))
     return conn.execute(s)
     
+def check_if_program_is_dead(program_name):
+    """Check if a program is dead."""
+    program = programs_dict[program_name]
+    s = sql.select([program]). \
+        where(program.c.has_result=='0')
+    proxy = conn.execute(s)
+    if proxy.rowcount==0:
+        return True
+    else:
+        return False
+
 def create_proxies():
     """Create proxies for every active program.
     
@@ -161,6 +176,7 @@ def create_proxies():
     return proxies
 
 active_proxies = create_proxies() 
+
 
 def refresh_proxy(program_name):
     """Refresh the appropriate active proxy."""
@@ -188,6 +204,20 @@ def create_supporter_lists():
     return supp_lists
 
 programs_list_dict = create_supporter_lists()
+
+def create_supporter_list_length():
+    length_of_lists = {program_name:len(sup_list) \
+                   for program_name, sup_list in programs_list_dict.iteritems()}
+    return length_of_lists
+
+remaining_supp_dict = create_supporter_list_length()
+
+def remaining_supporters(operator_id):
+    """Return the remaining supporters for each active program.
+    
+    Dictionary form.
+    """
+    return remaining_supp_dict
 
 def refresh_supporter_list(program_name):
     programs_list_dict[program_name] = supporter_list(program_name)
@@ -608,7 +638,8 @@ def change_program():
 def program_interactions(program_name):
     """Return a list of the program's possible interactions."""
     interactions = interactions_dict[program_name]
-    s = sql.select([interactions.c.Subcategory])
+    s = sql.select([interactions.c.Subcategory]). \
+        order_by(interactions.c.Subcategory)
     result = conn.execute(s)
     return [inter[0] for inter in result.fetchall()]
 
@@ -645,7 +676,7 @@ def create_program_summary(program_name):
     s = sql.select([tfrprograms.c.actual_name]). \
         where(tfrprograms.c.name==program_name)
     actual_name = conn.execute(s).fetchone()[0]
-    return "TFR Response: " + actual_name + " Completed"
+    return "TFR Response: " + actual_name
    
 def interaction_status():
     """Return the 'Completed' status."""
@@ -947,18 +978,21 @@ def set_supporter_result(operator_id, supporter_id, program_name, data):
     ins = result_table.insert().values(form)
     conn.execute(ins)
 
-def report_hours(operator_id, program_name, hours, start_time, end_time):
+def report_hours(operator_id, program_name, hours, start_time, end_time,
+                 device):
     date = datetime.date.today()
+    
     form = (None, operator_id, hours, program_name, date, start_time, 
-            end_time)
+            end_time, device)
     ins = tfroperatorreport.insert().values(form)
     conn.execute(ins)
                       
 def report_shift(operator_id, data):
     reported_hours = data
     print reported_hours
-    for program, hours, start_time, end_time in reported_hours:
-        report_hours(operator_id, program, hours, start_time, end_time)
+    for program, hours, start_time, end_time, device in reported_hours:
+        report_hours(operator_id, program, hours, start_time, end_time,
+                     device)
         
 def report_calls_made(operator_id, data):
     calls_made = data

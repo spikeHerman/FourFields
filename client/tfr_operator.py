@@ -25,6 +25,7 @@ RQ_USERNAME = 106  # done
 RQ_SCH_CALL_LIST = 107 # done
 RQ_SUP_BY_ID = 108
 RQ_SCH_BY_ID = 109
+RQ_REM_SUP   = 110
 
 ### Status message codes:
 ### ST_LOGIN  -- Login user
@@ -87,6 +88,11 @@ def get_active_programs_list(operator_id):
     message = (operator_id, RQ_PROG_L, None)
     return client(message)
 
+def get_remaining_supporters(operator_id):
+    """Auxiliary function that returns the remaining supporters list."""
+    message = (operator_id, RQ_REM_SUP, None)
+    return client(message)
+
 class TFROperator(object):
     def __init__(self):
         # Active supporter is the supporter that is up for interaction
@@ -137,6 +143,7 @@ class TFROperator(object):
             self.logged = True
             # Populate active_programs list                
             self.active_programs = get_active_programs_list(self.operator_id)
+            self.remaining_sups = get_remaining_supporters(self.operator_id)
             self.operator_username = self.get_operator_username()
             self.set_scheduled_call_list()
         elif reply == '1':

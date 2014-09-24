@@ -53,6 +53,7 @@ class TFRAgent(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
     RQ_SCH_CALL_LIST = 107
     RQ_SUP_BY_ID = 108
     RQ_SCH_BY_ID = 109
+    RQ_REM_SUP = 110
 
     ### Status message codes
     ### ST_LOGIN  -- Login User
@@ -113,6 +114,9 @@ class TFRAgent(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
     def scheduled_by_id(self, operator_id, data):
         call_id = data
         return tfr_data.get_scheduled_supporter_by_call_id(operator_id, call_id)
+        
+    def get_remaining_supporters(self, operator_id):
+        return tfr_data.remaining_supporters(operator_id)
 
     ### Handling status.
     def login(self, operator_id, password):
@@ -247,6 +251,8 @@ class TFRAgent(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
             return self.supporter_by_id(operator_id, feedback)
         elif msg_number == self.RQ_SCH_BY_ID:
             return self.scheduled_by_id(operator_id, feedback)
+        elif msg_number == self.RQ_REM_SUP:
+            return self.get_remaining_supporters(operator_id)
 
     def handle_status(self, operator_id, msg_number, feedback):
         """Handle status messages. """

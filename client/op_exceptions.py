@@ -40,3 +40,6 @@ class NoPreviousSupporter(MyError):
 
 class IsBeingCalledError(MyError):
     pass
+
+class WrongDeviceError(MyError):
+    pass
