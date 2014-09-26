@@ -133,8 +133,30 @@ def operator_dict():
     result = conn.execute(s)
     return {operator_id:password for operator_id, password in result}
 
+def check_if_program_is_dead(program_name):
+    """Check if a program is dead."""
+    program = programs_dict[program_name]
+    s = sql.select([program]). \
+        where(program.c.has_result=='0')
+    proxy = conn.execute(s)
+    if proxy.rowcount==0:
+        return True
+    else:
+        return False
+
+def deactivate_dead_programs():
+    """Deactivate any program that is dead."""
+    s = sql.select([tfrprograms.c.name])
+    for row in conn.execute(s):
+        if check_if_program_is_dead(row[0]):
+            stmt = tfrprograms.update(). \
+                   where(tfrprograms.c.name == row[0]). \
+                   values(active=0)
+            conn.execute(stmt)                         
+        
 def active_program_list():
     """Return all active program names as a list."""
+    deactivate_dead_programs()
     s = sql.select([tfrprograms]). \
         where(tfrprograms.c.active == 1)
     result = conn.execute(s)
@@ -154,17 +176,6 @@ def supporters_proxy(program_name):
         where(sql.and_(program.c.has_result=='0', program.c.has_schedule=='0'))
     return conn.execute(s)
     
-def check_if_program_is_dead(program_name):
-    """Check if a program is dead."""
-    program = programs_dict[program_name]
-    s = sql.select([program]). \
-        where(program.c.has_result=='0')
-    proxy = conn.execute(s)
-    if proxy.rowcount==0:
-        return True
-    else:
-        return False
-
 def create_proxies():
     """Create proxies for every active program.
     
@@ -244,9 +255,12 @@ def provide_supporter(operator_id, program_name):
     if prog_list:
         return prog_list.pop(index)
     else:
-        refresh_proxy(program_name)
-        refresh_supporter_list(program_name)
-        return '1'
+        if check_if_program_is_dead(program_name):
+            return '2'
+        else:
+            refresh_proxy(program_name)
+            refresh_supporter_list(program_name)
+            return '1'
     
 # DEPRECATED
 # def provide_supporter(operator_id, program_name):

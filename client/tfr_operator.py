@@ -245,7 +245,10 @@ class TFROperator(object):
         message = (self.operator_id, request, data)
         reply = client(message)
         if reply == '1':
-            raise op_exceptions.NoMoreSupportersError('Program has no active supporters left')
+            raise op_exceptions.NoMoreSupportersError('All supporters have been called./n Check the time of last call.')
+        if reply == '2':
+            raise op_exceptions.NoMoreSupportersError("Program is closed./n There are no active supporters left.")
+    
         else:
             self.active_supporter = reply
             self.active_program = self.chosen_program
