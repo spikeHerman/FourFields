@@ -37,6 +37,7 @@ tfrrt        = meta.tables['tfrrt']
 tfrwt        = meta.tables['tfrwt']
 tfrothers    = meta.tables['tfrothers']
 tfrsleepers  = meta.tables['tfrsleepers']
+tfrt         = meta.tables['tfrrt']
 
 programs_dict = {'tfrregresccc':tfrregresccc,
                  'tfrexpcc':tfrexpcc,
@@ -44,7 +45,8 @@ programs_dict = {'tfrregresccc':tfrregresccc,
                  'tfrrt':tfrrt,
                  'tfrsleepers':tfrsleepers,
                  'tfrothers':tfrothers,
-                 'tfrwt':tfrwt}
+                 'tfrwt':tfrwt,
+                 'tfrt':tfrt}
 
 # Auxiliary tables
 tfrcalls     = meta.tables['tfrcalls']
@@ -70,6 +72,7 @@ tfrrtresults     = meta.tables['tfrrtresults']
 tfrslpresults    = meta.tables['tfrslpresults']
 tfrexpresults    = meta.tables['tfrexpresults']
 tfrwtresults     = meta.tables['tfrwtresults']
+tfrtresults      = meta.tables['tfrtresults']
 
 results_dict = {'tfrregresccc':tfrccresults,
                 'tfrregrescdd':tfrddresults,
@@ -77,7 +80,8 @@ results_dict = {'tfrregresccc':tfrccresults,
                 'tfrexpcc':tfrexpresults,
                 'tfrsleepers':tfrslpresults,
                 'tfrothers':tfrothersresults,
-                'tfrwt':tfrwtresults}
+                'tfrwt':tfrwtresults,
+                'tfrt':tfrtresults}
 
 # DEPRECATED
 # # Scheduled calls
@@ -111,13 +115,14 @@ tfrfinancechanges = meta.tables['tfrfinancechanges']
 tfranswers        = meta.tables['tfranswers']
 
 # Interactions
-tfrddinteractions    = meta.tables['tfrddinteractions']
-tfrccinteractions    = meta.tables['tfrccinteractions']
+tfrddinteractions     = meta.tables['tfrddinteractions']
+tfrccinteractions     = meta.tables['tfrccinteractions']
 tfrslpinteractions    = meta.tables['tfrslpinteractions']
 tfrrtinteractions     = meta.tables['tfrrtinteractions']
 tfrexpinteractions    = meta.tables['tfrexpinteractions']
 tfrothersinteractions = meta.tables['tfrothersinteractions']
-tfrwtinteractions   = meta.tables['tfrwtinteractions']
+tfrwtinteractions     = meta.tables['tfrwtinteractions']
+tfrtinteractions      = meta.tables['tfrtinteractions']
 
 interactions_dict = {'tfrregresccc':tfrccinteractions,
                      'tfrexpcc':tfrexpinteractions,
@@ -125,7 +130,8 @@ interactions_dict = {'tfrregresccc':tfrccinteractions,
                      'tfrregrescdd':tfrddinteractions,
                      'tfrrt':tfrrtinteractions,
                      'tfrothers':tfrothersinteractions,
-                     'tfrwt':tfrwtinteractions}
+                     'tfrwt':tfrwtinteractions,
+                     'tfrt':tfrtinteractions}
 
 def operator_dict():
     """Return operator/password dictionary."""
@@ -216,10 +222,18 @@ def create_supporter_lists():
 
 programs_list_dict = create_supporter_lists()
 
+### Temporarily out of order
+#def create_supporter_list_length():
+#    length_of_lists = {program_name:len(sup_list) \
+#                       for program_name, sup_list in programs_list_dict.it#eritems()}
+#    return length_of_lists
+
 def create_supporter_list_length():
-    length_of_lists = {program_name:len(sup_list) \
-                   for program_name, sup_list in programs_list_dict.iteritems()}
+    proxies = create_proxies()
+    length_of_lists = {program_name:proxy.rowcount \
+                       for program_name, proxy in proxies.iteritems()}
     return length_of_lists
+
 
 remaining_supp_dict = create_supporter_list_length()
 
@@ -228,7 +242,8 @@ def remaining_supporters(operator_id):
     
     Dictionary form.
     """
-    return remaining_supp_dict
+    
+    return create_supporter_list_length()
 
 def refresh_supporter_list(program_name):
     programs_list_dict[program_name] = supporter_list(program_name)
@@ -500,7 +515,11 @@ def get_scheduled_call_by_id(operator_id, call_id):
     s = sql.select([tfrscheduledcalls]). \
         where(tfrscheduledcalls.c.scheduled_id==call_id)
     result = conn.execute(s)
-    return result.fetchone()
+    sch_call = result.fetchone() 
+    if sch_call == None:
+        return False
+    else:
+        return sch_call
 
 def get_scheduled_supp_by_id(lookup_id, program):
     s = sql.select([program]). \
@@ -514,6 +533,7 @@ def del_scheduled_call_by_id(operator_id, call_id):
         where(tfrscheduledcalls.c.scheduled_id==call_id)
     conn.execute(s)
 
+# Deprecated
 def fetch_supporter_from_sched(operator_id, supporter_id, program_name):
     """Fetch supporter from scheduled table."""
     program = scheduled_dict[program_name]
@@ -522,12 +542,14 @@ def fetch_supporter_from_sched(operator_id, supporter_id, program_name):
     result = conn.execute(s)
     return result.fetchone()
 
+# Deprecated
 def insert_into_program_table(operator_id, supporter, program_name):
     """Insert into table of program_name the supporter_id."""
     program = programs_dict[program_name]
     ins = program.insert().values(supporter)
     conn.execute(ins)
     
+# Deprecated
 def move_supporter_from_sched_to_program(operator_id, supporter_id,
                                          program_name):
     """Move supporter from scheduled table to program."""
@@ -560,17 +582,20 @@ def move_supporter_from_sched_to_program(operator_id, supporter_id,
 def get_scheduled_supporter_by_call_id(operator_id, call_id):
     """Return the supporter based on the scheduled call's id."""
     scheduled = get_scheduled_call_by_id(operator_id, call_id)
-    lookup_id = scheduled['supporter_id']
-    program_name = scheduled['program']
-    comment = scheduled['operator_comments']
-    program = programs_dict[program_name]
-    supporter = get_scheduled_supp_by_id(lookup_id, program)
-    stmt = program.update(). \
-           where(program.c.LookupID==lookup_id). \
-           values(has_schedule="0")
-    conn.execute(stmt)
-    del_scheduled_call_by_id(operator_id, call_id)
-    return supporter, comment, program_name
+    if scheduled == False:
+        return "1"
+    else:
+        lookup_id = scheduled['supporter_id']
+        program_name = scheduled['program']
+        comment = scheduled['operator_comments']
+        program = programs_dict[program_name]
+        supporter = get_scheduled_supp_by_id(lookup_id, program)
+        stmt = program.update(). \
+               where(program.c.LookupID==lookup_id). \
+               values(has_schedule="0")
+        conn.execute(stmt)
+        del_scheduled_call_by_id(operator_id, call_id)
+        return supporter, comment, program_name
 
 def get_supporter_by_id(lookup_id, program_name):
     """Return the supported based on lookup_id."""
@@ -992,12 +1017,19 @@ def set_supporter_result(operator_id, supporter_id, program_name, data):
     ins = result_table.insert().values(form)
     conn.execute(ins)
 
+def get_program_actual_name(program_name):
+    s = sql.select([tfrprograms.c.actual_name]). \
+        where(tfrprograms.c.name==program_name)
+    actual_name = conn.execute(s).fetchone()[0]
+    return actual_name
+
 def report_hours(operator_id, program_name, hours, start_time, end_time,
                  device):
     date = datetime.date.today()
-    
-    form = (None, operator_id, hours, program_name, date, start_time, 
-            end_time, device)
+    actual_name = get_program_actual_name(program_name)
+    username = get_operator_username(operator_id)
+    form = (None, operator_id, username, hours, actual_name,
+            date, start_time, end_time, device)
     ins = tfroperatorreport.insert().values(form)
     conn.execute(ins)
                       

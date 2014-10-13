@@ -127,14 +127,22 @@ class Application(tk.Frame):
                                              command=self.choose_program,
                                              background=INTERFACE_COLOR)
         self.program_list_button.grid(row=0, column=0)
-
         self.create_supporter_button()
         self.create_arranged_calls()
         self.create_postponed_calls()
         
+        
         self.supporter_form = gui.TFRSupporterForm(self.operator, self)
         self.supporter_form.grid(row=0, rowspan=4, column=1)
-        
+    
+    def refresh_supporters_left(self):
+        self.operator.refresh_remaining_sups() 
+        self.supp_list.delete(0, tk.END)
+        for program in self.operator.active_programs:
+            number_of_sup = self.operator.remaining_sups[program]
+            self.program_list.insert(tk.END, program)
+            self.supp_list.insert(tk.END, number_of_sup)
+
     def choose_program(self):
         try:
             selection = int(self.program_list.curselection()[0])
@@ -233,6 +241,7 @@ class Application(tk.Frame):
                 self.supporter_form.interactions.interactions_button.configure(state=tk.NORMAL)
                 self.operator.no_of_calls += 1
                 self.refresh_calls_made()
+                self.refresh_supporters_left()
             except op_exceptions.NoMoreSupportersError as e:
                 tkMessageBox.showwarning('Active supporters', e)
 
@@ -470,16 +479,19 @@ class Application(tk.Frame):
         
         The call id is provided by the first listbox.
         """
-        selection = int(self.call_number_list.curselection()[0])
-        call_id = self.call_number_list.get(selection)
-        self.operator.get_scheduled_call(call_id)
-        self.supporter_form.clear_form()
-        self.supporter_form.fill_form()
-        ### Fill comment form with comment from scheduled call
-        self.supporter_form.calls.sch_comments_entry.insert('0.0', 
+        try:
+            selection = int(self.call_number_list.curselection()[0])
+            call_id = self.call_number_list.get(selection)
+            self.operator.get_scheduled_call(call_id)
+            self.supporter_form.clear_form()
+            self.supporter_form.fill_form()
+            ### Fill comment form with comment from scheduled call
+            self.supporter_form.calls.sch_comments_entry.insert('0.0', 
                                                             self.operator.scheduled_call_comment)
-        self.operator.set_scheduled_call_list()
-        self.refresh_scheduled_calls()
+        except op_exceptions.ScheduledCallError as e:
+            tkMessageBox.showwarning('Scheduled calls')
+            self.operator.set_scheduled_call_list()
+            self.refresh_scheduled_calls()
 
     @no_connection
     def refresh_sch_list(self):
@@ -509,6 +521,7 @@ class Application(tk.Frame):
         self.prog_list1 = tk.Listbox(self.logout_frame, height=1, width=15,
                                      exportselection=0)
         self.prog_list1.grid(row=1, column=0)
+
         self.prog_list2 = tk.Listbox(self.logout_frame, height=1, width=15,
                                      exportselection=0)
         self.prog_list2.grid(row=2, column=0)
@@ -537,113 +550,121 @@ class Application(tk.Frame):
                                 command=lambda: self.clear(self.prog_list4))
         self.clear4.grid(row=4, column=1)
         
-        ### Start and end time of shift
+        ### Start and end time of shift1
         
         self.total_hours_lbl = tk.Label(self.logout_frame, text="Hours")
         self.total_hours_lbl.grid(row=0, column=2)
         self.total_hours1 = tk.Entry(self.logout_frame, width=3)
         self.total_hours1.grid(row=1, column=2)
-        self.total_hours2 = tk.Entry(self.logout_frame, width=3)
-        self.total_hours2.grid(row=2, column=2)
-        self.total_hours3 = tk.Entry(self.logout_frame, width=3)
-        self.total_hours3.grid(row=3, column=2)
-        self.total_hours4 = tk.Entry(self.logout_frame, width=3)
-        self.total_hours4.grid(row=4, column=2)
-
+        ### Separator1
         self.s_sep1 = tk.Label(self.logout_frame, text="--")
         self.s_sep1.grid(row=1, column=3)
-        self.s_sep2 = tk.Label(self.logout_frame, text="--")
-        self.s_sep2.grid(row=2, column=3)
-        self.s_sep3 = tk.Label(self.logout_frame, text="--")
-        self.s_sep3.grid(row=3, column=3)
-        self.s_sep4 = tk.Label(self.logout_frame, text="--")
-        self.s_sep4.grid(row=4, column=3)
-                               
+        ### Start hour 1
         self.start_hour_lbl = tk.Label(self.logout_frame, text="Start")
         self.start_hour_lbl.grid(row=0, column=4, columnspan=3)
         self.start_hour1 = tk.Entry(self.logout_frame, width=2)
-        self.start_hour1.grid(row=1, column=4)
-        self.start_hour2 = tk.Entry(self.logout_frame, width=2)
-        self.start_hour2.grid(row=2, column=4) 
-        self.start_hour3 = tk.Entry(self.logout_frame, width=2)
-        self.start_hour3.grid(row=3, column=4) 
-        self.start_hour4 = tk.Entry(self.logout_frame, width=2)
-        self.start_hour4.grid(row=4, column=4) 
- 
+        self.start_hour1.grid(row=1, column=4)   
+        ###Separator1
         self.start_sep1 = tk.Label(self.logout_frame, text=":")
         self.start_sep1.grid(row=1, column=5)
-        self.start_sep2 = tk.Label(self.logout_frame, text=":")
-        self.start_sep2.grid(row=2, column=5)
-        self.start_sep3 = tk.Label(self.logout_frame, text=":")
-        self.start_sep3.grid(row=3, column=5)
-        self.start_sep4 = tk.Label(self.logout_frame, text=":")
-        self.start_sep4.grid(row=4, column=5)
-
+        ###Start min 1
         self.start_min1 = tk.Entry(self.logout_frame, width=2)
         self.start_min1.grid(row=1, column=6) 
-        self.start_min2 = tk.Entry(self.logout_frame, width=2)
-        self.start_min2.grid(row=2, column=6) 
-        self.start_min3 = tk.Entry(self.logout_frame, width=2)
-        self.start_min3.grid(row=3, column=6) 
-        self.start_min4 = tk.Entry(self.logout_frame, width=2)
-        self.start_min4.grid(row=4, column=6) 
-
+        ###Separator1
         self.e_sep1 = tk.Label(self.logout_frame, text="--")
         self.e_sep1.grid(row=1, column=7)
-        self.e_sep2 = tk.Label(self.logout_frame, text="--")
-        self.e_sep2.grid(row=2, column=7)
-        self.e_sep3 = tk.Label(self.logout_frame, text="--")
-        self.e_sep3.grid(row=3, column=7)
-        self.e_sep4 = tk.Label(self.logout_frame, text="--")
-        self.e_sep4.grid(row=4, column=7)
-
+        # End hour 1
         self.end_hour_lbl = tk.Label(self.logout_frame, text="End")
         self.end_hour_lbl.grid(row=0, column=8, columnspan=3)
         self.end_hour1 = tk.Entry(self.logout_frame, width=2)
         self.end_hour1.grid(row=1, column=8) 
-        self.end_hour2 = tk.Entry(self.logout_frame, width=2)
-        self.end_hour2.grid(row=2, column=8) 
-        self.end_hour3 = tk.Entry(self.logout_frame, width=2)
-        self.end_hour3.grid(row=3, column=8) 
-        self.end_hour4 = tk.Entry(self.logout_frame, width=2)
-        self.end_hour4.grid(row=4, column=8) 
- 
+        # separator 1
         self.end_sep1 = tk.Label(self.logout_frame, text=":")
         self.end_sep1.grid(row=1, column=9)
-        self.end_sep2 = tk.Label(self.logout_frame, text=":")
-        self.end_sep2.grid(row=2, column=9)
-        self.end_sep3 = tk.Label(self.logout_frame, text=":")
-        self.end_sep3.grid(row=3, column=9)
-        self.end_sep4 = tk.Label(self.logout_frame, text=":")
-        self.end_sep4.grid(row=4, column=9)
-        
+        # End min 1
         self.end_min1 = tk.Entry(self.logout_frame, width=2)
         self.end_min1.grid(row=1, column=10) 
-        self.end_min2 = tk.Entry(self.logout_frame, width=2)
-        self.end_min2.grid(row=2, column=10) 
-        self.end_min3 = tk.Entry(self.logout_frame, width=2)
-        self.end_min3.grid(row=3, column=10) 
-        self.end_min4 = tk.Entry(self.logout_frame, width=2)
-        self.end_min4.grid(row=4, column=10) 
-
+        # sep1
         self.d_sep1 = tk.Label(self.logout_frame, text="--")
         self.d_sep1.grid(row=1, column=11)
-        self.d_sep2 = tk.Label(self.logout_frame, text="--")
-        self.d_sep2.grid(row=2, column=11)
-        self.d_sep3 = tk.Label(self.logout_frame, text="--")
-        self.d_sep3.grid(row=3, column=11)
-        self.d_sep4 = tk.Label(self.logout_frame, text="--")
-        self.d_sep4.grid(row=4, column=11)
-        
-
+        # device 1 
         self.device_lbl = tk.Label(self.logout_frame, text="Phone")
         self.device_lbl.grid(row=0, column=12)
         self.device1_entry = tk.Entry(self.logout_frame, width=4)
         self.device1_entry.grid(row=1, column=12)
+
+
+
+        ### 2nd Package
+        self.total_hours2 = tk.Entry(self.logout_frame, width=3)
+        self.total_hours2.grid(row=2, column=2)
+        self.s_sep2 = tk.Label(self.logout_frame, text="--")
+        self.s_sep2.grid(row=2, column=3)
+        self.start_hour2 = tk.Entry(self.logout_frame, width=2)
+        self.start_hour2.grid(row=2, column=4) 
+        self.start_sep2 = tk.Label(self.logout_frame, text=":")
+        self.start_sep2.grid(row=2, column=5)
+        self.start_min2 = tk.Entry(self.logout_frame, width=2)
+        self.start_min2.grid(row=2, column=6) 
+        self.e_sep2 = tk.Label(self.logout_frame, text="--")
+        self.e_sep2.grid(row=2, column=7)
+        self.end_sep2 = tk.Label(self.logout_frame, text=":")
+        self.end_sep2.grid(row=2, column=9)
+        self.end_hour2 = tk.Entry(self.logout_frame, width=2)
+        self.end_hour2.grid(row=2, column=8) 
+        self.end_min2 = tk.Entry(self.logout_frame, width=2)
+        self.end_min2.grid(row=2, column=10) 
+        self.d_sep2 = tk.Label(self.logout_frame, text="--")
+        self.d_sep2.grid(row=2, column=11)
         self.device2_entry = tk.Entry(self.logout_frame, width=4)
         self.device2_entry.grid(row=2, column=12)
+   
+
+
+        self.total_hours3 = tk.Entry(self.logout_frame, width=3)
+        self.total_hours3.grid(row=3, column=2)
+        self.s_sep3 = tk.Label(self.logout_frame, text="--")
+        self.s_sep3.grid(row=3, column=3)
+        self.start_hour3 = tk.Entry(self.logout_frame, width=2)
+        self.start_hour3.grid(row=3, column=4) 
+        self.start_sep3 = tk.Label(self.logout_frame, text=":")
+        self.start_sep3.grid(row=3, column=5)
+        self.start_min3 = tk.Entry(self.logout_frame, width=2)
+        self.start_min3.grid(row=3, column=6)
+        self.e_sep3 = tk.Label(self.logout_frame, text="--")
+        self.e_sep3.grid(row=3, column=7)
+        self.end_hour3 = tk.Entry(self.logout_frame, width=2)
+        self.end_hour3.grid(row=3, column=8)
+        self.end_sep3 = tk.Label(self.logout_frame, text=":")
+        self.end_sep3.grid(row=3, column=9)
+        self.end_min3 = tk.Entry(self.logout_frame, width=2)
+        self.end_min3.grid(row=3, column=10) 
+        self.d_sep3 = tk.Label(self.logout_frame, text="--")
+        self.d_sep3.grid(row=3, column=11)
         self.device3_entry = tk.Entry(self.logout_frame, width=4)
         self.device3_entry.grid(row=3, column=12)
+
+
+        self.total_hours4 = tk.Entry(self.logout_frame, width=3)
+        self.total_hours4.grid(row=4, column=2)
+        self.s_sep4 = tk.Label(self.logout_frame, text="--")
+        self.s_sep4.grid(row=4, column=3)
+        self.start_hour4 = tk.Entry(self.logout_frame, width=2)
+        self.start_hour4.grid(row=4, column=4) 
+        self.start_sep4 = tk.Label(self.logout_frame, text=":")
+        self.start_sep4.grid(row=4, column=5)
+        self.start_min4 = tk.Entry(self.logout_frame, width=2)
+        self.start_min4.grid(row=4, column=6) 
+        self.e_sep4 = tk.Label(self.logout_frame, text="--")
+        self.e_sep4.grid(row=4, column=7)
+        self.end_hour4 = tk.Entry(self.logout_frame, width=2)
+        self.end_hour4.grid(row=4, column=8)
+        self.end_sep4 = tk.Label(self.logout_frame, text=":")
+        self.end_sep4.grid(row=4, column=9)
+        self.end_min4 = tk.Entry(self.logout_frame, width=2)
+        self.end_min4.grid(row=4, column=10) 
+        self.d_sep4 = tk.Label(self.logout_frame, text="--")
+        self.d_sep4.grid(row=4, column=11)
         self.device4_entry = tk.Entry(self.logout_frame, width=4)
         self.device4_entry.grid(row=4, column=12)
 

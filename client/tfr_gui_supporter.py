@@ -21,7 +21,7 @@ CALLS_COLOR = '#DDD4BC'
 # Color at scheduled frames
 SCHEDULED_COLOR = '#DDD4BC'
 # Color at changed entries
-HIGHLIGHT_COLOR = '#C2E0FF'
+HIGHLIGHT_COLOR = '#ADEDB8'
 
 def no_connection(func):
     def check_connection_and_proceed(*args, **kwargs):
@@ -313,6 +313,13 @@ class TFRSupporterForm(tk.Canvas):
                 commit_answer(self.operator.active_supporter_id,
                               self.operator.chosen_program,
                               (self.check_and_get_result(),comment))
+            # Get current selection, in order to change its background color.
+            selection = int(self.interactions.interactions_list.curselection()[0])
+            # Clear selection of interactions listbox
+            list_size = self.interactions.interactions_list.size()
+            self.interactions.interactions_list.selection_clear(0, list_size)
+            # Change color to the previously selected element
+            self.interactions.interactions_list.itemconfig(selection, bg=HIGHLIGHT_COLOR)
         
     def commit_interaction(self):
         """Commit the interaction based on the result."""

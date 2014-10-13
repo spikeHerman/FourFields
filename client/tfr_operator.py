@@ -125,7 +125,7 @@ class TFROperator(object):
         self.in_previous = False
         self.aux_supporter = None
         self.aux_program = None
-
+        
     def __find_value_by_field(self, searched_field):
         """Find any value of the active supporter appropriate field."""
         for field, value in self.active_supporter:
@@ -150,6 +150,10 @@ class TFROperator(object):
             raise op_exceptions.IDError('ID is incorrect')
         elif reply == '2':
             raise op_exceptions.PWDError('Password is incorrect')
+
+    def refresh_remaining_sups(self):
+        """Refresh the remaining supporters dictionary."""
+        self.remaining_sups = get_remaining_supporters(self.operator_id)
 
     def update_supporter_details(self):
         """Update all necessary details whenever a new supporter is provided."""
@@ -308,12 +312,16 @@ class TFROperator(object):
         request = RQ_SCH_BY_ID
         data = call_id
         message = (self.operator_id, request, data)
-        supporter, comment, program = client(message)
-        self.active_supporter = supporter
-        self.get_supporter_call_list()
-        self.active_program = program
-        self.scheduled_call_comment = comment
-        self.update_supporter_details()
+        reply = client(message)
+        if reply == "1":
+            raise op_exceptions.ScheduledCallError('Scheduled call no longer exists.')
+        else:
+             supporter, comment, program = reply       
+             self.active_supporter = supporter
+             self.get_supporter_call_list()
+             self.active_program = program
+             self.scheduled_call_comment = comment
+             self.update_supporter_details()
 
     def set_scheduled_call_list(self):
         """Set the scheduled call list."""

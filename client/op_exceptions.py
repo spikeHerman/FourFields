@@ -43,3 +43,6 @@ class IsBeingCalledError(MyError):
 
 class WrongDeviceError(MyError):
     pass
+
+class ScheduledCallError(MyError):
+    pass
