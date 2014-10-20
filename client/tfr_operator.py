@@ -3,6 +3,7 @@ import threading
 import pickle
 import socket
 import datetime
+import time
 
 import op_exceptions
 import tfr_aux
@@ -72,6 +73,7 @@ def unpicklify(message):
     return pickle.loads(message)
 
 def client(message):
+    start = time.clock()
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((SERVER_IP, PORT))
     try:
@@ -79,6 +81,7 @@ def client(message):
         sock.sendall(msg)
         response = sock.recv(8192)
         sock.close()
+        print time.clock() - start
         return unpicklify(response)
     finally:
         sock.close()

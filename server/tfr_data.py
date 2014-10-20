@@ -22,7 +22,7 @@ engine = sqlalchemy. \
          create_engine(conn_string)
 
 # Create connector to the database
-conn = engine.connect()
+
 # Create meta that will be used to generate the table objects
 meta = sqlalchemy.MetaData()
 meta.reflect(bind=engine)
@@ -135,16 +135,20 @@ interactions_dict = {'tfrregresccc':tfrccinteractions,
 
 def operator_dict():
     """Return operator/password dictionary."""
+    conn = engine.connect()
     s = sql.select([tfroperators.c.operator_id, tfroperators.c.password])
     result = conn.execute(s)
+    conn.close()
     return {operator_id:password for operator_id, password in result}
 
 def check_if_program_is_dead(program_name):
     """Check if a program is dead."""
+    conn = engine.connect()
     program = programs_dict[program_name]
     s = sql.select([program]). \
         where(program.c.has_result=='0')
     proxy = conn.execute(s)
+    conn.close()
     if proxy.rowcount==0:
         return True
     else:
@@ -152,20 +156,24 @@ def check_if_program_is_dead(program_name):
 
 def deactivate_dead_programs():
     """Deactivate any program that is dead."""
+    conn = engine.connect()
     s = sql.select([tfrprograms.c.name])
     for row in conn.execute(s):
         if check_if_program_is_dead(row[0]):
             stmt = tfrprograms.update(). \
                    where(tfrprograms.c.name == row[0]). \
                    values(active=0)
-            conn.execute(stmt)                         
+            conn.execute(stmt)                        
+    conn.close()
         
 def active_program_list():
     """Return all active program names as a list."""
+    conn = engine.connect()
     deactivate_dead_programs()
     s = sql.select([tfrprograms]). \
         where(tfrprograms.c.active == 1)
     result = conn.execute(s)
+    conn.close()
     return [row[tfrprograms.c.name] for row in result]
 
 
@@ -177,10 +185,13 @@ LOOKUP_ID = 'LookupID'
 
 def supporters_proxy(program_name):
     """Return the support proxy."""
+    conn = engine.connect()
     program = programs_dict[program_name]
     s = sql.select([program]). \
         where(sql.and_(program.c.has_result=='0', program.c.has_schedule=='0'))
-    return conn.execute(s)
+    result = conn.execute(s)
+    conn.close()
+    return result
     
 def create_proxies():
     """Create proxies for every active program.
@@ -302,36 +313,45 @@ def get_calls(operator_id, supporter_id):
     The calls are returned as a list in ascending
     call number.
     """
+    conn = engine.connect()
     s = sql.select([tfrcalls.c.call_number, tfrcalls.c.operator_username,
                     tfrcalls.c.call_datetime, tfrcalls.c.comments]). \
         where(tfrcalls.c.supporter_id==supporter_id). \
         order_by(tfrcalls.c.call_number)
 
     result = conn.execute(s)
-    return result.fetchall()
+    conn.close()
+    call_list = [row for row in result.fetchall()]
+    return call_list
 
 
 ### OPERATOR/LOGIN MANAGEMENT ###
 def activate_operator(operator_id):
     """Activate operator in the operators table."""
+    conn = engine.connect()
     stmt = tfroperators.update(). \
            where(tfroperators.c.operator_id == operator_id). \
            values(active=1)
     conn.execute(stmt)
+    conn.close()
         
 
 def deactivate_operator(operator_id):
     """Activate operator in the operators table."""
+    conn = engine.connect()
     stmt = tfroperators.update(). \
            where(tfroperators.c.operator_id == operator_id). \
            values(active=0)
     conn.execute(stmt)
+    conn.close()
 
 def get_operator_activity(operator_id):
     """Return the active field of the given operator."""
+    conn = engine.connect()
     s = sql.select([tfroperators.c.active]). \
         where(tfroperators.c.operator_id == operator_id)
     result = conn.execute(s)
+    conn.close()
     try:
         active = result.fetchone()[0]
         return active
@@ -347,19 +367,23 @@ def check_operator_active(operator_id):
 
 def activate_being_called(operator_id, supporter_id, program_name):
     """Activate (switch to 1) the is_being_called entry of a supporter"""
+    conn = engine.connect()
     program = programs_dict[program_name]
     stmt = program.update(). \
            where(program.c.LookupID==supporter_id). \
            values(is_being_called="1")
     conn.execute(stmt)
+    conn.close()
     
 def deactivate_being_called(operator_id, supporter_id, program_name):
     """Deactivate (switch to 0) the is_being_called entry of a supporter"""
+    conn = engine.connect()
     program = programs_dict[program_name]
     stmt = program.update(). \
            where(program.c.LookupID==supporter_id). \
            values(is_being_called="0")
     conn.execute(stmt)
+    conn.close()
 
 
 ### OPERATOR LOGIN FUNCTION
@@ -398,6 +422,7 @@ def operator_logout(operator_id):
 
 def check_number_of_calls(lookup_id, program):
     """Check how many calls to this supporter have been made."""
+    conn = engine.connect()
     # query by lookup_id and program, order by descending order of calls made
     s = sql.select([tfrcalls]). \
         where(sql.and_ \
@@ -406,6 +431,7 @@ def check_number_of_calls(lookup_id, program):
         order_by(tfrcalls.c.call_number.desc())
     
     call = conn.execute(s).fetchone()
+    conn.close()
     # if None is returned by the proxy, no entry exists and so
     # no calls have been made
     if call is None:
@@ -420,9 +446,11 @@ def check_number_of_calls(lookup_id, program):
 
 def get_operator_username(operator_id):
     """Get operator name by operator's id."""
+    conn = engine.connect()
     s = sql.select([tfroperators.c.username]). \
         where(tfroperators.c.operator_id==operator_id)
     result = conn.execute(s)
+    conn.close()
     name = result.fetchone()
     return name[0]
 
@@ -434,6 +462,7 @@ def add_call(operator_id, lookup_id, program, comment):
     been contacted.
 
     """
+    conn = engine.connect()
     number_of_calls = check_number_of_calls(lookup_id, program)
     if number_of_calls == 0:
         actual_program = programs_dict[program]
@@ -449,6 +478,7 @@ def add_call(operator_id, lookup_id, program, comment):
                  program=program, call_datetime=just_now, comments=comment,
                  supporter_id=lookup_id)
     conn.execute(ins)
+    conn.close()
     
     ### Deprecated after use of new supporter entries
     # shift_program = shift_calls[program]
@@ -476,26 +506,33 @@ def add_call(operator_id, lookup_id, program, comment):
 #     conn.execute(ins)
 
 ### New version, making use of new supporter fields
-def add_scheduled_call(operator_id, datetime, supporter_id,
+def add_scheduled_call(operator_id, sch_datetime, supporter_id,
                        comments, program_name):
     """Add scheduled call."""
+    conn = engine.connect()
     ins = tfrscheduledcalls.insert(). \
           values(operator_id=operator_id, program=program_name,
                  supporter_id=supporter_id, operator_comments = comments,
-                 datetime=datetime)
+                 datetime=sch_datetime)
     conn.execute(ins)
     program = programs_dict[program_name]
     stmt = program.update(). \
            where(program.c.LookupID == supporter_id). \
            values(has_schedule="1")
     conn.execute(stmt)
+    formatted_date = sch_datetime.strftime("%d/%m, %H:%M")
+    call_comment = 'TA->' + formatted_date + comments
+    add_call(operator_id, supporter_id, program_name, call_comment)
+    conn.close()
+    
 
 def ordered_scheduled_list(operator_id):
     """Get the ordered scheduled calls list."""
-
+    conn = engine.connect()
     s = sql.select([tfrscheduledcalls]). \
         order_by(tfrscheduledcalls.c.datetime)
     result = conn.execute(s)
+    conn.close()
     sch_calls = []
     for row in result:
         sch_calls.append(row.items())
@@ -512,47 +549,59 @@ def first_scheduled_call():
 
 def get_scheduled_call_by_id(operator_id, call_id):
     """Return the scheduled call corresponding to the call_id."""
+    conn = engine.connect()
     s = sql.select([tfrscheduledcalls]). \
         where(tfrscheduledcalls.c.scheduled_id==call_id)
     result = conn.execute(s)
     sch_call = result.fetchone() 
+    conn.close()
     if sch_call == None:
         return False
     else:
         return sch_call
+    
 
 def get_scheduled_supp_by_id(lookup_id, program):
+    conn = engine.connect()
     s = sql.select([program]). \
         where(program.c.LookupID == lookup_id)
     result = conn.execute(s)
+    conn.close()
     return result.fetchone().items()
 
 def del_scheduled_call_by_id(operator_id, call_id):
     """Delete the scheduled call corresponding to the call_id."""
+    conn = engine.connect()
     s = tfrscheduledcalls.delete(). \
         where(tfrscheduledcalls.c.scheduled_id==call_id)
     conn.execute(s)
+    conn.close()
 
 # Deprecated
 def fetch_supporter_from_sched(operator_id, supporter_id, program_name):
     """Fetch supporter from scheduled table."""
+    conn = engine.connect()
     program = scheduled_dict[program_name]
     s = sql.select([program]). \
         where(program.c.LookupID==supporter_id)
     result = conn.execute(s)
+    conn.close()
     return result.fetchone()
 
 # Deprecated
 def insert_into_program_table(operator_id, supporter, program_name):
     """Insert into table of program_name the supporter_id."""
+    conn = engine.connect()
     program = programs_dict[program_name]
     ins = program.insert().values(supporter)
     conn.execute(ins)
+    conn.close()
     
 # Deprecated
 def move_supporter_from_sched_to_program(operator_id, supporter_id,
                                          program_name):
     """Move supporter from scheduled table to program."""
+    conn = engine.connect()
     supporter = tuple(fetch_supporter_from_sched(operator_id, supporter_id, 
                                                  program_name))
     insert_into_program_table(operator_id, supporter, program_name)
@@ -560,6 +609,7 @@ def move_supporter_from_sched_to_program(operator_id, supporter_id,
     ins = program.delete(). \
         where (program.c.LookupID==supporter_id)
     conn.execute(ins)
+    conn.close()
     
 #   GET SCHEDULED SUPPORTER BY CALL ID.
 #   Used by tfr_agent, this function provides the supporter that corresponds 
@@ -581,8 +631,10 @@ def move_supporter_from_sched_to_program(operator_id, supporter_id,
 ### Updated version, using the new supporter fields.
 def get_scheduled_supporter_by_call_id(operator_id, call_id):
     """Return the supporter based on the scheduled call's id."""
+    conn = engine.connect()
     scheduled = get_scheduled_call_by_id(operator_id, call_id)
     if scheduled == False:
+        conn.close()
         return "1"
     else:
         lookup_id = scheduled['supporter_id']
@@ -594,16 +646,19 @@ def get_scheduled_supporter_by_call_id(operator_id, call_id):
                where(program.c.LookupID==lookup_id). \
                values(has_schedule="0")
         conn.execute(stmt)
+        conn.close()
         del_scheduled_call_by_id(operator_id, call_id)
         return supporter, comment, program_name
 
 def get_supporter_by_id(lookup_id, program_name):
     """Return the supported based on lookup_id."""
+    conn = engine.connect()
     try:
         program = programs_dict[program_name]
         s = sql.select([program]). \
             where(program.c.LookupID == lookup_id)
         supporter = conn.execute(s).fetchone()
+        conn.close()
         if supporter is None:
             return '2'
         else:
@@ -612,6 +667,7 @@ def get_supporter_by_id(lookup_id, program_name):
             else:
                 return '3'
     except KeyError:
+        conn.close()
         return '1'
     
 def refresh_scheduled_calls():
@@ -620,11 +676,13 @@ def refresh_scheduled_calls():
     All entries that have surpassed the day limit 
     are deleted.
     """
+    conn = engine.connect()
     right_now = datetime.datetime.now()
     margin = datetime.timedelta(hours=24)
     s = tfrscheduledcalls.delete(). \
         where(tfrscheduledcalls.c.datetime < right_now - margin)
     conn.execute(s)
+    conn.close()
 
 def check_next_scheduled_call():
     """Check if it's time for the next scheduled call.
@@ -658,14 +716,18 @@ def next_scheduled_call_supporter():
 
 def choose_program(operator_id, program_name):
     """Choose program."""
+    conn = engine.connect()
     if program_name in active_programs:
         stmt = tfroperators.update(). \
                where(tfroperators.c.operator_id == operator_id). \
                values(program=program_name)
         conn.execute(stmt)
+        conn.close()
         return True
     else:
+        conn.close()
         raise tfr_exceptions.UserInputError('Given program is not active.')
+        
 
 def change_program():
     """Change the chosen program."""
@@ -676,10 +738,12 @@ def change_program():
 
 def program_interactions(program_name):
     """Return a list of the program's possible interactions."""
+    conn = engine.connect()
     interactions = interactions_dict[program_name]
     s = sql.select([interactions.c.Subcategory]). \
         order_by(interactions.c.Subcategory)
     result = conn.execute(s)
+    conn.close()
     return [inter[0] for inter in result.fetchall()]
 
 
@@ -692,17 +756,22 @@ def program_interactions(program_name):
 
 def program_name_by_operator(operator_id):
     """Return the program that the operator has chosen."""
+    conn = engine.connect()
     s = sql.select([tfroperators.c.program]). \
         where(tfroperators.c.operator_id==operator_id)
-    return conn.execute(s).fetchone()[0]
+    result = conn.execute(s)
+    conn.close()
+    return result.fetchone()[0]
 
 def find_constituent_name(lookup_id, program_name):
     """Return the constituent's name based on his lookup_id."""
     # find the correct table/program.
+    conn = engine.connect()
     program = programs_dict[program_name]
     s = sql.select([program.c.FirstName, program.c.Surname]). \
         where(program.c.LookupID==lookup_id)
     result = conn.execute(s)
+    conn.close()
     name = result.fetchone()
     # form the constituent's fullname and return it
     return name[0] + ' ' + name[1]
@@ -712,9 +781,11 @@ def create_program_summary(program_name):
 
     Find the actual program's name querying the db.
     """
+    conn = engine.connect()
     s = sql.select([tfrprograms.c.actual_name]). \
         where(tfrprograms.c.name==program_name)
     actual_name = conn.execute(s).fetchone()[0]
+    conn.close()
     return "TFR Response: " + actual_name
    
 def interaction_status():
@@ -727,15 +798,21 @@ def get_contact_method():
 
 def program_category(program_name):
     """Return the appropriate program category"""
+    conn = engine.connect()
     s = sql.select([tfrprograms.c.category]). \
         where(tfrprograms.c.name==program_name)
-    return conn.execute(s).fetchone()[0]
+    result = conn.execute(s)
+    conn.close()
+    return result.fetchone()[0]
 
 def program_actual_date(program_name):
     """Return the appropriate program actual_date."""
+    conn = engine.connect()
     s = sql.select([tfrprograms.c.actual_date]). \
         where(tfrprograms.c.name==program_name)
-    return  conn.execute(s).fetchone()[0] 
+    result = conn.execute(s)
+    conn.close()
+    return result.fetchone()[0]
 
 def format_expected_date():
     today = datetime.date.today()
@@ -745,6 +822,7 @@ def format_expected_date():
 
 def check_lookup_id_exists(lookup_id, program_name):
     """Check if the lookup_id exists in the given program."""
+    conn = engine.connect()
     program = programs_dict[program_name]
     s = sql.select([program]). \
         where(program.c.LookupID==lookup_id)
@@ -755,10 +833,13 @@ def check_lookup_id_exists(lookup_id, program_name):
             where(scheduled.c.LookupID==lookup_id)
         result2 = conn.execute(s)
         if result2.fetchone() is None:
+            conn.close()
             return False
         else:
+            conn.close()
             return True
     else:
+        conn.close()
         return True
 
 ### FEEDBACK DATA.
@@ -833,6 +914,7 @@ def interaction_form(operator_id, supporter_id, program_name, feedback):
 
 def commit_interaction(operator_id, supporter_id, program_name, feedback):
     """Commit interaction."""
+    conn = engine.connect()
     program = programs_dict[program_name]
     stmt = program.update(). \
            where(program.c.LookupID==supporter_id). \
@@ -841,6 +923,7 @@ def commit_interaction(operator_id, supporter_id, program_name, feedback):
     form = interaction_form(operator_id, supporter_id, program_name, feedback)
     ins = tfrresults.insert().values(form)
     conn.execute(ins)
+    conn.close()
 
 ### PERSONAL AND ADDRESS INFO
 # Positioning of fields in personal_info tuple coming from an operator.
@@ -901,10 +984,12 @@ def personal_changes_form(operator_id, supporter_id, program_name, data):
             comment)
 
 def submit_personal_changes(operator_id, supporter_id, program_name, data):
+    conn = engine.connect()
     form = personal_changes_form(operator_id, supporter_id,
                                  program_name, data)
     ins = tfrcontactchanges.insert().values(form)
     conn.execute(ins)
+    conn.close()
 
 
 ### FINANCIAL CHANGES
@@ -951,10 +1036,12 @@ def finance_changes_form(operator_id, supporter_id, program_name, data):
             comment)
 
 def submit_financial_changes(operator_id, supporter_id, program_name, data):
+    conn = engine.connect()
     form = finance_changes_form(operator_id, supporter_id, 
                                 program_name, data)
     ins = tfrfinancechanges.insert().values(form)
     conn.execute(ins)
+    conn.close()
     
 ### SUBMIT ANSWERS
 #
@@ -980,19 +1067,24 @@ def answer_form(operator_id, supporter_id, program_name, data):
             comments)
 
 def commit_answer(operator_id, supporter_id, program_name, data):
+    conn = engine.connect()
     form = answer_form(operator_id, supporter_id,
                        program_name, data)
     ins = tfranswers.insert().values(form)
     conn.execute(ins)
     set_supporter_result(operator_id, supporter_id, program_name, data)
-    
+    call_comment = "OK - " + data[ANS_ANSWER] + ' - ' + data[ANS_COMMENT]
+    add_call(operator_id, supporter_id, program_name, call_comment)
+    conn.close()
 
 def fetch_supporter(operator_id, supporter_id, program_name):
     """Fetch supporter"""
+    conn = engine.connect()
     program = programs_dict[program_name]
     s = sql.select([program]). \
         where(program.c.LookupID==supporter_id)
     result = conn.execute(s)
+    conn.close()
     return result.fetchone()
 
 def get_supporter_from_program(operator_id, supporter_id, program_name):
@@ -1005,6 +1097,7 @@ def get_supporter_from_program(operator_id, supporter_id, program_name):
 
 
 def set_supporter_result(operator_id, supporter_id, program_name, data):
+    conn = engine.connect()
     result = data[ANS_ANSWER]
 #    comment = data[ANS_COMMENT]
     # Date that the transaction has been recorded
@@ -1016,36 +1109,43 @@ def set_supporter_result(operator_id, supporter_id, program_name, data):
     form = supporter + extra
     ins = result_table.insert().values(form)
     conn.execute(ins)
+    conn.close()
 
 def get_program_actual_name(program_name):
+    conn = engine.connect()
     s = sql.select([tfrprograms.c.actual_name]). \
         where(tfrprograms.c.name==program_name)
     actual_name = conn.execute(s).fetchone()[0]
+    conn.close()
     return actual_name
 
-def report_hours(operator_id, program_name, hours, start_time, end_time,
-                 device):
+def report_hours(operator_id, program_name, hours, minutes,
+                 start_time, end_time, device):
+    conn = engine.connect()
     date = datetime.date.today()
     actual_name = get_program_actual_name(program_name)
     username = get_operator_username(operator_id)
-    form = (None, operator_id, username, hours, actual_name,
+    form = (None, operator_id, username, hours, minutes, actual_name,
             date, start_time, end_time, device)
     ins = tfroperatorreport.insert().values(form)
     conn.execute(ins)
+    conn.close()
                       
 def report_shift(operator_id, data):
     reported_hours = data
     print reported_hours
-    for program, hours, start_time, end_time, device in reported_hours:
-        report_hours(operator_id, program, hours, start_time, end_time,
-                     device)
+    for program, hours, minutes, start_time, end_time, device in reported_hours:
+        report_hours(operator_id, program, hours, minutes, 
+                     start_time, end_time, device)
         
 def report_calls_made(operator_id, data):
+    conn = engine.connect()
     calls_made = data
     date = datetime.date.today()
     form = (None, operator_id, date, calls_made)
     ins = tfrcallsreport.insert().values(form)
     conn.execute(ins)
+    conn.close()
 
 def update_personal(operator_id, supporter_id, program_name, data):
     phone1  = data[CON_PHONE1]
@@ -1060,56 +1160,61 @@ def update_personal(operator_id, supporter_id, program_name, data):
     comment = data[CON_COMMENT]
     
     program = programs_dict[program_name]
-
+    conn = engine.connect()
     if phone1 != '':
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(Phone1=phone1)
         conn.execute(stmt)
+        conn.close()
     if phone2 != '':
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(Phone2=phone2)
         conn.execute(stmt)
+        conn.close()
     if phone3 != '':
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(Phone3=phone3)
         conn.execute(stmt)
-    
+        conn.close()
     if email != '':
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(EmailAddress=email)
         conn.execute(stmt)
+        conn.close()
     if address != '':
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(Address=address)
         conn.execute(stmt)
+        conn.close()
     if city != '':
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(City=city)
         conn.execute(stmt)
+        conn.close()
     if postal != '':
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(Postal=postal)
         conn.execute(stmt)
-    
+        conn.close()
     if name != '':
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(FirstName=name)
         conn.execute(stmt)
-
+        conn.close()
     if surname != '':
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(Surname=surname)
         conn.execute(stmt)
-            
+        conn.close()
         
               
         

@@ -15,24 +15,6 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
     """Bla.
 
     """
-    
-    def handle(self):
-        # self.request is the TCP socket connected to the client
-        self.data = self.request.recv(1024).strip()
-        cur_thread = threading.current_thread()
-        print "{}: {}".format(cur_thread.name, self.data)
-        unp_data = pickle.loads(self.data)
-        reply = self.server.handle_message(unp_data)
-        msg = pickle.dumps(reply)
-        self.request.sendall(msg)
-
-class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
-    pass
-
-class TFRAgent(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
-    """Bla Bla.
-
-    """
     ### Request message codes
     ### Message codes:
     ### RQ_SUPP     -- Request Supporter
@@ -77,11 +59,16 @@ class TFRAgent(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
     UPD_ACT_CALLED= 309
     UPD_DE_CALLED = 310
 
-    def __init__(self, server_address, RequestHandlerClass):
-        """Constructor. """
-        SocketServer.TCPServer. \
-        __init__(self, server_address, RequestHandlerClass)
-        
+    def handle(self):
+        # self.request is the TCP socket connected to the client
+        self.data = self.request.recv(1024).strip()
+        cur_thread = threading.current_thread()
+        print "{}: {}".format(cur_thread.name, self.data)
+        unp_data = pickle.loads(self.data)
+        reply = self.handle_message(unp_data)
+        msg = pickle.dumps(reply)
+        print sys.getsizeof(msg)
+        self.request.sendall(msg)
     ### Handling requests.
     def supporter_to_operator(self, operator_id, program_name):
         """Provide a supporter to the operator."""
@@ -208,7 +195,7 @@ class TFRAgent(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
     def update_being_called_deactivate(self, operator_id, feedback):
         supporter_id, program_name = feedback
         tfr_data.deactivate_being_called(operator_id, supporter_id, program_name)
-    
+
     ### Parsing messages
     def handle_message(self, message):
         operator_id = message[0]
@@ -288,15 +275,25 @@ class TFRAgent(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
         elif msg_number == self.UPD_DE_CALLED:
             return self.update_being_called_deactivate(operator_id, feedback)
 
+class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+    pass
+
+# class TFRAgent(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+#     """Bla Bla.
+
+#     """
+
+#     def __init__(self, server_address, RequestHandlerClass):
+#         """Constructor. """
+#         SocketServer.TCPServer. \
+#         __init__(self, server_address, RequestHandlerClass)
+        
+    
 if __name__ == '__main__':  
-    try:
         address = (IP, PORT)
-        agent = TFRAgent(address, ThreadedTCPRequestHandler)
-#       Run in a separate thread
-#       server_thread = threading.Thread(target=agent.serve_forever)
-#       server_thread.daemon = True
-#       server_thread.start()
-        agent.serve_forever()
-    except KeyboardInterrupt:
-        agent.shutdown
-        sys.exit(0)
+        agent = ThreadedTCPServer(address, ThreadedTCPRequestHandler)
+        server_thread = threading.Thread(target=agent.serve_forever)
+        server_thread.daemon = True
+        server_thread.start()
+        
+

@@ -241,7 +241,7 @@ class Application(tk.Frame):
                 self.supporter_form.interactions.interactions_button.configure(state=tk.NORMAL)
                 self.operator.no_of_calls += 1
                 self.refresh_calls_made()
-                self.refresh_supporters_left()
+                #self.refresh_supporters_left()
             except op_exceptions.NoMoreSupportersError as e:
                 tkMessageBox.showwarning('Active supporters', e)
 
@@ -487,9 +487,11 @@ class Application(tk.Frame):
             self.supporter_form.fill_form()
             ### Fill comment form with comment from scheduled call
             self.supporter_form.calls.sch_comments_entry.insert('0.0', 
-                                                            self.operator.scheduled_call_comment)
+                                                                self.operator.scheduled_call_comment)
+            self.operator.set_scheduled_call_list()
+            self.refresh_scheduled_calls()
         except op_exceptions.ScheduledCallError as e:
-            tkMessageBox.showwarning('Scheduled calls')
+            tkMessageBox.showwarning('Scheduled calls', e)
             self.operator.set_scheduled_call_list()
             self.refresh_scheduled_calls()
 
@@ -558,121 +560,137 @@ class Application(tk.Frame):
         self.total_hours1.grid(row=1, column=2)
         ### Separator1
         self.s_sep1 = tk.Label(self.logout_frame, text="--")
-        self.s_sep1.grid(row=1, column=3)
+        self.s_sep1.grid(row=1, column=4)
+        ### Minutes worked
+        self.total_minutes_lbl = tk.Label(self.logout_frame, text="Minutes")
+        self.total_minutes_lbl.grid(row=0, column=3)
+        self.total_minutes1 = tk.Entry(self.logout_frame, width=3)
+        self.total_minutes1.grid(row=1, column=3)
         ### Start hour 1
         self.start_hour_lbl = tk.Label(self.logout_frame, text="Start")
-        self.start_hour_lbl.grid(row=0, column=4, columnspan=3)
+        self.start_hour_lbl.grid(row=0, column=5, columnspan=3)
         self.start_hour1 = tk.Entry(self.logout_frame, width=2)
-        self.start_hour1.grid(row=1, column=4)   
+        self.start_hour1.grid(row=1, column=5)   
         ###Separator1
         self.start_sep1 = tk.Label(self.logout_frame, text=":")
-        self.start_sep1.grid(row=1, column=5)
+        self.start_sep1.grid(row=1, column=6)
         ###Start min 1
         self.start_min1 = tk.Entry(self.logout_frame, width=2)
-        self.start_min1.grid(row=1, column=6) 
+        self.start_min1.grid(row=1, column=7) 
         ###Separator1
         self.e_sep1 = tk.Label(self.logout_frame, text="--")
-        self.e_sep1.grid(row=1, column=7)
+        self.e_sep1.grid(row=1, column=8)
         # End hour 1
         self.end_hour_lbl = tk.Label(self.logout_frame, text="End")
-        self.end_hour_lbl.grid(row=0, column=8, columnspan=3)
+        self.end_hour_lbl.grid(row=0, column=9, columnspan=3)
         self.end_hour1 = tk.Entry(self.logout_frame, width=2)
-        self.end_hour1.grid(row=1, column=8) 
+        self.end_hour1.grid(row=1, column=9) 
         # separator 1
         self.end_sep1 = tk.Label(self.logout_frame, text=":")
-        self.end_sep1.grid(row=1, column=9)
+        self.end_sep1.grid(row=1, column=10)
         # End min 1
         self.end_min1 = tk.Entry(self.logout_frame, width=2)
-        self.end_min1.grid(row=1, column=10) 
+        self.end_min1.grid(row=1, column=11) 
         # sep1
         self.d_sep1 = tk.Label(self.logout_frame, text="--")
-        self.d_sep1.grid(row=1, column=11)
+        self.d_sep1.grid(row=1, column=12)
         # device 1 
         self.device_lbl = tk.Label(self.logout_frame, text="Phone")
-        self.device_lbl.grid(row=0, column=12)
+        self.device_lbl.grid(row=0, column=13)
         self.device1_entry = tk.Entry(self.logout_frame, width=4)
-        self.device1_entry.grid(row=1, column=12)
+        self.device1_entry.grid(row=1, column=13)
 
 
 
         ### 2nd Package
         self.total_hours2 = tk.Entry(self.logout_frame, width=3)
         self.total_hours2.grid(row=2, column=2)
+        self.total_minutes2 = tk.Entry(self.logout_frame, width=3)
+        self.total_minutes2.grid(row=2, column=3)        
         self.s_sep2 = tk.Label(self.logout_frame, text="--")
-        self.s_sep2.grid(row=2, column=3)
+        self.s_sep2.grid(row=2, column=4)
         self.start_hour2 = tk.Entry(self.logout_frame, width=2)
-        self.start_hour2.grid(row=2, column=4) 
+        self.start_hour2.grid(row=2, column=5) 
         self.start_sep2 = tk.Label(self.logout_frame, text=":")
-        self.start_sep2.grid(row=2, column=5)
+        self.start_sep2.grid(row=2, column=6)
         self.start_min2 = tk.Entry(self.logout_frame, width=2)
-        self.start_min2.grid(row=2, column=6) 
+        self.start_min2.grid(row=2, column=7) 
         self.e_sep2 = tk.Label(self.logout_frame, text="--")
-        self.e_sep2.grid(row=2, column=7)
+        self.e_sep2.grid(row=2, column=8)
         self.end_sep2 = tk.Label(self.logout_frame, text=":")
-        self.end_sep2.grid(row=2, column=9)
+        self.end_sep2.grid(row=2, column=10)
         self.end_hour2 = tk.Entry(self.logout_frame, width=2)
-        self.end_hour2.grid(row=2, column=8) 
+        self.end_hour2.grid(row=2, column=9) 
         self.end_min2 = tk.Entry(self.logout_frame, width=2)
-        self.end_min2.grid(row=2, column=10) 
+        self.end_min2.grid(row=2, column=11) 
         self.d_sep2 = tk.Label(self.logout_frame, text="--")
-        self.d_sep2.grid(row=2, column=11)
+        self.d_sep2.grid(row=2, column=12)
         self.device2_entry = tk.Entry(self.logout_frame, width=4)
-        self.device2_entry.grid(row=2, column=12)
+        self.device2_entry.grid(row=2, column=13)
    
 
 
         self.total_hours3 = tk.Entry(self.logout_frame, width=3)
         self.total_hours3.grid(row=3, column=2)
+        self.total_minutes3 = tk.Entry(self.logout_frame, width=3)
+        self.total_minutes3.grid(row=3, column=3)
         self.s_sep3 = tk.Label(self.logout_frame, text="--")
-        self.s_sep3.grid(row=3, column=3)
+        self.s_sep3.grid(row=3, column=4)
         self.start_hour3 = tk.Entry(self.logout_frame, width=2)
-        self.start_hour3.grid(row=3, column=4) 
+        self.start_hour3.grid(row=3, column=5) 
         self.start_sep3 = tk.Label(self.logout_frame, text=":")
-        self.start_sep3.grid(row=3, column=5)
+        self.start_sep3.grid(row=3, column=6)
         self.start_min3 = tk.Entry(self.logout_frame, width=2)
-        self.start_min3.grid(row=3, column=6)
+        self.start_min3.grid(row=3, column=7)
         self.e_sep3 = tk.Label(self.logout_frame, text="--")
-        self.e_sep3.grid(row=3, column=7)
+        self.e_sep3.grid(row=3, column=8)
         self.end_hour3 = tk.Entry(self.logout_frame, width=2)
-        self.end_hour3.grid(row=3, column=8)
+        self.end_hour3.grid(row=3, column=9)
         self.end_sep3 = tk.Label(self.logout_frame, text=":")
-        self.end_sep3.grid(row=3, column=9)
+        self.end_sep3.grid(row=3, column=10)
         self.end_min3 = tk.Entry(self.logout_frame, width=2)
-        self.end_min3.grid(row=3, column=10) 
+        self.end_min3.grid(row=3, column=11) 
         self.d_sep3 = tk.Label(self.logout_frame, text="--")
-        self.d_sep3.grid(row=3, column=11)
+        self.d_sep3.grid(row=3, column=12)
         self.device3_entry = tk.Entry(self.logout_frame, width=4)
-        self.device3_entry.grid(row=3, column=12)
+        self.device3_entry.grid(row=3, column=13)
 
 
         self.total_hours4 = tk.Entry(self.logout_frame, width=3)
         self.total_hours4.grid(row=4, column=2)
+        self.total_minutes4 = tk.Entry(self.logout_frame, width=3)
+        self.total_minutes4.grid(row=4, column=3)
         self.s_sep4 = tk.Label(self.logout_frame, text="--")
-        self.s_sep4.grid(row=4, column=3)
+        self.s_sep4.grid(row=4, column=4)
         self.start_hour4 = tk.Entry(self.logout_frame, width=2)
-        self.start_hour4.grid(row=4, column=4) 
+        self.start_hour4.grid(row=4, column=5) 
         self.start_sep4 = tk.Label(self.logout_frame, text=":")
-        self.start_sep4.grid(row=4, column=5)
+        self.start_sep4.grid(row=4, column=6)
         self.start_min4 = tk.Entry(self.logout_frame, width=2)
-        self.start_min4.grid(row=4, column=6) 
+        self.start_min4.grid(row=4, column=7) 
         self.e_sep4 = tk.Label(self.logout_frame, text="--")
-        self.e_sep4.grid(row=4, column=7)
+        self.e_sep4.grid(row=4, column=8)
         self.end_hour4 = tk.Entry(self.logout_frame, width=2)
-        self.end_hour4.grid(row=4, column=8)
+        self.end_hour4.grid(row=4, column=9)
         self.end_sep4 = tk.Label(self.logout_frame, text=":")
-        self.end_sep4.grid(row=4, column=9)
+        self.end_sep4.grid(row=4, column=10)
         self.end_min4 = tk.Entry(self.logout_frame, width=2)
-        self.end_min4.grid(row=4, column=10) 
+        self.end_min4.grid(row=4, column=11) 
         self.d_sep4 = tk.Label(self.logout_frame, text="--")
-        self.d_sep4.grid(row=4, column=11)
+        self.d_sep4.grid(row=4, column=12)
         self.device4_entry = tk.Entry(self.logout_frame, width=4)
-        self.device4_entry.grid(row=4, column=12)
+        self.device4_entry.grid(row=4, column=13)
 
         
         self.hours_list = [self.total_hours1, 
                            self.total_hours2, 
                            self.total_hours3, 
                            self.total_hours4]
+
+        self.minutes_list = [self.total_minutes1,
+                             self.total_minutes2,
+                             self.total_minutes3,
+                             self.total_minutes4]
         
         self.start_end_list = [(self.start_hour1, self.start_min1, self.end_hour1, self.end_min1),
                                (self.start_hour2, self.start_min2, self.end_hour2, self.end_min2),
@@ -696,6 +714,7 @@ class Application(tk.Frame):
         pr_list.selection_clear(0, tk.END)
 
     def fill_program_lists(self):
+        """Fill the program lists with the appropriate programs."""
         for program in self.operator.active_programs:
             self.prog_list1.insert(tk.END, program)
             self.prog_list2.insert(tk.END, program)
@@ -704,35 +723,41 @@ class Application(tk.Frame):
     
     
     def get_shift_hours(self):
-        shifts_list = zip(self.prog_list, self.hours_list, self.start_end_list, self.device_list)
+        shifts_list = zip(self.prog_list, self.hours_list, 
+                          self.minutes_list, self.start_end_list, 
+                          self.device_list)
         checked_shift_list = []
-        for prog, hour, start_end, dev in shifts_list:
+        for prog, hour, minute, start_end, dev in shifts_list:
             try:
                 selection = int(prog.curselection()[0])
                 program = prog.get(selection)
                 hours = hour.get()
+                minutes = minute.get()
                 start_hour, start_min, end_hour, end_min = start_end
                 s_hour = start_hour.get()
                 s_min = start_min.get()
                 e_hour = end_hour.get()
                 e_min = end_min.get()
                 device = dev.get()
-                checked_shift_list.append((program, hours, s_hour, s_min, e_hour, e_min, device))
+                checked_shift_list.append((program, hours, minutes, s_hour, s_min, e_hour, e_min, device))
             except IndexError as e:                
                 pass
         return checked_shift_list
     
     def __check_dev(self, dev):
-        FIRST = 150
-        LAST = 157
+        """Check if device is within legal range."""
+
+        FIRST = 150 # First device number
+        LAST = 157  # Last device number
         if dev not in range(FIRST, LAST):
             raise op_exceptions.WrongDeviceError('Wrong device number')
 
     def create_shift_list(self, shift_list):
         returned_list = []
-        for prog, hour, s_hour, s_min, e_hour, e_min, dev in shift_list:
+        for prog, hour, minute, s_hour, s_min, e_hour, e_min, dev in shift_list:
             try:
                 hour = int(hour)
+                minute = int(minute)
                 s_hour = int(s_hour)
                 s_min = int(s_min)
                 e_hour = int(e_hour)
@@ -741,7 +766,7 @@ class Application(tk.Frame):
                 e_time = datetime.time(e_hour, e_min)
                 device = int(dev)
                 self.__check_dev(device)
-                returned_list.append((prog, hour, s_time, e_time, device))
+                returned_list.append((prog, hour, minute, s_time, e_time, device))
             except ValueError as e:
                 return False
             except op_exceptions.WrongDeviceError as e:

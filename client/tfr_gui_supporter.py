@@ -467,6 +467,14 @@ class TFRSupporterForm(tk.Canvas):
                                    'There is no active supporter, no data to submit.')
 
     def __get_input_date_text(self):
+        """Check and get scheduled date entries.
+        
+        If the entries contain integer string values, 
+        return a tuple containing them.
+        (format -> (day, month, year, hour, minutes)
+        Else return false.
+        """
+        
         try:
             day = int(self.calls.day_entry.get())
             month = int(self.calls.month_entry.get())
@@ -479,7 +487,11 @@ class TFRSupporterForm(tk.Canvas):
 
 
     def get_scheduled_date(self):
-        """Get the scheduled date inputted by the user."""
+        """Get the scheduled date inputted by the user.
+        
+        If the entry values are indeed integers, return a datetime object
+        created by those values. If not return False.
+        """
         date = self.__get_input_date_text()
         if date:
             day, month, year, hour, minutes = date
@@ -489,30 +501,50 @@ class TFRSupporterForm(tk.Canvas):
 
     @no_connection            
     def commit_scheduled_call(self):
-        """Commit a scheduled call."""
-        if self.check_supporter_exists():
+        """Commit a scheduled call.
+        
+        Check initially for active supporter, catch exception if date is invalid,
+        check if values provided are integer,check scheduled_date comment length,
+        check if (valid) date is past date, show all appropriate warnings and 
+        if everything is ok commit the scheduled date.
+        """
+    
+        # Today date to be compared to the input date
+        now = datetime.datetime.now()
+        
+        if self.check_supporter_exists(): # Checking there is an active supporter
             try:
-                date = self.get_scheduled_date()
+                date = self.get_scheduled_date() # waiting here to catch ValueError indicating invalid date
                 comment = self.calls.sch_comments_entry.get('0.0', tk.END)
                 if date:
-                    if self.__check_comment_length(comment):
-                        self.operator.scheduled_call(self.operator.active_supporter_id,
-                                                     date, comment,
-                                                     self.operator.chosen_program)
-                        # Disable the button since commit was successful
-                        self.calls.scheduled_button.configure(state=tk.DISABLED)
-                        self.master.refresh_sch_list()
-                        tkMessageBox.showinfo('Scheduled call', 
-                                              'Scheduled call committed')
+                    if date > now:
+                        if self.__check_comment_length(comment):
+                            # The actual commit.
+                            self.operator.scheduled_call(self.operator.active_supporter_id,
+                                                         date, comment,
+                                                         self.operator.chosen_program)
+                            # Disable the button since commit was successful
+                            self.calls.scheduled_button.configure(state=tk.DISABLED)
+                            # Refreshing schedule list
+                            # method of tfr_app.py 
+                            self.master.refresh_sch_list()
+                            tkMessageBox.showinfo('Scheduled call', 
+                                                  'Scheduled call committed')
+                        else:
+                            tkMessageBox.showerror('Scheduled call',
+                                                   'Comment too long, max length is 250')
                     else:
                         tkMessageBox.showerror('Scheduled call',
-                                               'Comment too long, max length is 250')
+                                               'You cannot enter a past date')
                 else:
                     tkMessageBox.showerror('Scheculed call',
-                                               'Wrong input date')
-            except ValueError as e:
+                                           'Wrong input date')
+            except ValueError as e: 
+                # If integer values provided do not form a valid scheduled date,
+                # show the appropriate datetime error.
                 tkMessageBox.showerror('Scheduled call', e)
-        else:
+        
+        else: 
             tkMessageBox.showerror('Commit changes',
                                    'There is no active supporter, no data to submit.')
 
@@ -535,6 +567,13 @@ class TFRSupporterForm(tk.Canvas):
 
     
     def fill_form(self):
+        """Fills the interaction form with a new active supporter.
+
+        Calls all functions required to fill the supporter form,
+        with data from a new supporter. Before calling fill_form,
+        clear_form must be called, in order to empty the form.
+        """
+
         self.fill_contact_form()
         self.fill_address_form()
         self.fill_program_info()
@@ -550,6 +589,12 @@ class TFRSupporterForm(tk.Canvas):
         self.fill_onceoff()
 
     def clear_form(self):
+        """Method to clear the supporter form.
+
+        Calls all functions required to clear the interaction form, 
+        in order to refill it.
+        """
+        
         self.clear_calls()
         self.clear_contact_form()
         self.clear_address_form()
@@ -571,15 +616,18 @@ class TFRSupporterForm(tk.Canvas):
         self.clear_highlights()
 
     def clear_postponed(self):
+        """Clear the postpone call comment."""
         self.calls.psp_comment_entry.delete(0, tk.END)
 
     def clear_disabled_buttons(self):
+        """Enable all disabled buttons."""
         self.interactions.interactions_button.configure(state=tk.NORMAL)
         self.calls.commit_call_button.configure(state=tk.NORMAL)
         self.calls.scheduled_button.configure(state=tk.NORMAL)
 
 
     def clear_scheduled_call(self):
+        """Clear all entries of the commit scheduled call."""
         self.calls.day_entry.delete(0, tk.END)
         self.calls.month_entry.delete(0, tk.END)
         self.calls.year_entry.delete(0, tk.END)
@@ -587,6 +635,7 @@ class TFRSupporterForm(tk.Canvas):
         self.calls.minutes_entry.delete(0, tk.END)
 
     def clear_comments(self):
+        """Clear all comments in the supporter form."""
         self.interactions.inter_comments_txt.delete("0.0", tk.END)
         self.account_info.fnc_comment_txt.delete("0.0", tk.END)
         self.supporter_info_form.prsn_comment_txt.delete("0.0", tk.END)
