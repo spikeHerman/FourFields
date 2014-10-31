@@ -733,7 +733,6 @@ def change_program():
     """Change the chosen program."""
     pass
 
-
 ### PROGRAM INTERACTIONS
 
 def program_interactions(program_name):
@@ -983,6 +982,7 @@ def personal_changes_form(operator_id, supporter_id, program_name, data):
             surname,
             comment)
 
+
 def submit_personal_changes(operator_id, supporter_id, program_name, data):
     conn = engine.connect()
     form = personal_changes_form(operator_id, supporter_id,
@@ -990,8 +990,7 @@ def submit_personal_changes(operator_id, supporter_id, program_name, data):
     ins = tfrcontactchanges.insert().values(form)
     conn.execute(ins)
     conn.close()
-
-
+    
 ### FINANCIAL CHANGES
 FNC_AMOUNT    = 0
 FNC_FREQUENCY = 1
@@ -1042,7 +1041,8 @@ def submit_financial_changes(operator_id, supporter_id, program_name, data):
     ins = tfrfinancechanges.insert().values(form)
     conn.execute(ins)
     conn.close()
-    
+
+        
 ### SUBMIT ANSWERS
 #
 #

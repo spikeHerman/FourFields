@@ -147,6 +147,11 @@ class Application(tk.Frame):
         try:
             selection = int(self.program_list.curselection()[0])
             program = self.program_list.get(selection)
+            self.supporter_form.clear_form()
+            self.operator.active_supporter = None
+            self.operator.call_list = None
+            self.operator.pr_interactions = None
+            self.interaction_committed = False
             self.operator.choose_program(program)
             tkMessageBox.showinfo('Program Choice', 
                                   'You are now calling {}'.format(program))

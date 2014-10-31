@@ -217,7 +217,7 @@ class TFRSupporterForm(tk.Canvas):
             return True
     
     def highlight_changes(self, checkbuttons_list):
-        """Checks a checkbutton_lsit and highlight any changes."""
+        """Checks a checkbutton_list and highlight any changes."""
         for cb, check_var, entry_var, entry in checkbuttons_list:
             if check_var.get() == 1:
                 entry.configure(background=HIGHLIGHT_COLOR)
@@ -311,7 +311,7 @@ class TFRSupporterForm(tk.Canvas):
         if self.check_and_get_result() is not None:
             self.operator. \
                 commit_answer(self.operator.active_supporter_id,
-                              self.operator.chosen_program,
+                              self.operator.active_program,
                               (self.check_and_get_result(),comment))
             # Get current selection, in order to change its background color.
             selection = int(self.interactions.interactions_list.curselection()[0])
@@ -326,7 +326,7 @@ class TFRSupporterForm(tk.Canvas):
         if self.check_and_get_result() is not None:
             self.operator. \
                 commit_interaction(self.operator.active_supporter_id,
-                                   self.operator.chosen_program,
+                                   self.operator.active_program,
                                    (self.check_and_get_result(),'','','',''))
     
     def make_personal_changes(self):
@@ -335,7 +335,7 @@ class TFRSupporterForm(tk.Canvas):
         if changes is not None:
             self.operator. \
                 commit_personal_changes(self.operator.active_supporter_id,
-                                        self.operator.chosen_program,
+                                        self.operator.active_program,
                                         changes)
             self.highlight_changes(self.CBPersonalList)
         
@@ -345,7 +345,7 @@ class TFRSupporterForm(tk.Canvas):
         if changes is not None:
             self.operator. \
                 commit_financial_changes(self.operator.active_supporter_id,
-                                         self.operator.chosen_program,
+                                         self.operator.active_program,
                                          changes)
             self.highlight_changes(self.CBFinanceList)
     
@@ -366,7 +366,7 @@ class TFRSupporterForm(tk.Canvas):
     
     @no_connection
     def submit_button(self):
-        """Submit button for finance and personal changes."""
+        """Submit button for finance changes and answer."""
         #if self.operator.interaction_committed:
         #    tkMessageBox.showwarning('Commit answer',
         #                             'You have already committed a change for this supporter')
@@ -450,15 +450,18 @@ class TFRSupporterForm(tk.Canvas):
     def commit_call(self):
         """Commit a call."""
         if self.check_supporter_exists():
+            no_of_calls = len(self.operator.call_list)
             comment = self.get_call_comment()
             max_comment_length = 250
             if len(comment) <= max_comment_length:
                 self.operator.commit_call(self.operator.active_supporter_id,
-                                          self.operator.chosen_program,
+                                          self.operator.active_program,
                                           comment)
                 self.calls.commit_call_button.configure(state=tk.DISABLED)
                 tkMessageBox.showinfo('Commit call',
                                       'Call commited!')
+                self.calls.call_entries[no_of_calls][3]. \
+                    configure(background=HIGHLIGHT_COLOR)
             else:
                 tkMessageBox.showerror('Commit call',
                                        'Comment length is too long,\n max length is 250 characters')
@@ -522,7 +525,7 @@ class TFRSupporterForm(tk.Canvas):
                             # The actual commit.
                             self.operator.scheduled_call(self.operator.active_supporter_id,
                                                          date, comment,
-                                                         self.operator.chosen_program)
+                                                         self.operator.active_program)
                             # Disable the button since commit was successful
                             self.calls.scheduled_button.configure(state=tk.DISABLED)
                             # Refreshing schedule list
@@ -530,6 +533,9 @@ class TFRSupporterForm(tk.Canvas):
                             self.master.refresh_sch_list()
                             tkMessageBox.showinfo('Scheduled call', 
                                                   'Scheduled call committed')
+                            self.calls.sch_comments_entry. \
+                                configure(background=HIGHLIGHT_COLOR)
+                                                        
                         else:
                             tkMessageBox.showerror('Scheduled call',
                                                    'Comment too long, max length is 250')
@@ -658,6 +664,9 @@ class TFRSupporterForm(tk.Canvas):
             entry.configure(background='white')
         for cb, cv, ev, entry in self.CBFinanceList:
             entry.configure(background='white')
+        for entry in self.calls.call_entries:
+            entry[3].configure(background='white')
+        self.calls.sch_comments_entry.configure(background='white')
 
     def fill_interactions(self):
         for interaction in self.operator.pr_interactions:
