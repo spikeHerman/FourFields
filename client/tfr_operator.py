@@ -166,7 +166,7 @@ class TFROperator(object):
         self.interaction_committed = False
         self.in_previous = False
         self.activate_being_called(self.active_supporter_id,
-                                       self.active_program)
+                                   self.active_program)
 
     def previous_check(self):
         """The previous supporter procedure required for each new supporter"""
@@ -208,7 +208,7 @@ class TFROperator(object):
         """
         request = RQ_CALLS
         # looking for the supporter's lookupid in the active_supporter
-        data = self.__find_value_by_field('LookupID')
+        data = self.__find_value_by_field('LookupID'), self.active_program
         message = (self.operator_id, request, data)
         self.call_list = client(message)
         

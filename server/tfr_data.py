@@ -307,7 +307,7 @@ def provide_supporter(operator_id, program_name):
 # 
 #
 
-def get_calls(operator_id, supporter_id):
+def get_calls(operator_id, supporter_id, program_name):
     """Get the calls made to given supporter.
 
     The calls are returned as a list in ascending
@@ -316,7 +316,9 @@ def get_calls(operator_id, supporter_id):
     conn = engine.connect()
     s = sql.select([tfrcalls.c.call_number, tfrcalls.c.operator_username,
                     tfrcalls.c.call_datetime, tfrcalls.c.comments]). \
-        where(tfrcalls.c.supporter_id==supporter_id). \
+        where(sql.and_ \
+              (tfrcalls.c.supporter_id==supporter_id, 
+               tfrcalls.c.program==program_name)). \
         order_by(tfrcalls.c.call_number)
 
     result = conn.execute(s)
@@ -1160,56 +1162,64 @@ def update_personal(operator_id, supporter_id, program_name, data):
     comment = data[CON_COMMENT]
     
     program = programs_dict[program_name]
-    conn = engine.connect()
     if phone1 != '':
+        conn = engine.connect()
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(Phone1=phone1)
         conn.execute(stmt)
         conn.close()
     if phone2 != '':
+        conn = engine.connect()
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(Phone2=phone2)
         conn.execute(stmt)
         conn.close()
     if phone3 != '':
+        conn = engine.connect()
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(Phone3=phone3)
         conn.execute(stmt)
         conn.close()
     if email != '':
+        conn = engine.connect()
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(EmailAddress=email)
         conn.execute(stmt)
         conn.close()
     if address != '':
+        conn = engine.connect()
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(Address=address)
         conn.execute(stmt)
         conn.close()
     if city != '':
+        conn = engine.connect()
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(City=city)
         conn.execute(stmt)
         conn.close()
     if postal != '':
+        conn = engine.connect()
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(Postal=postal)
         conn.execute(stmt)
         conn.close()
     if name != '':
+        conn = engine.connect()
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(FirstName=name)
         conn.execute(stmt)
         conn.close()
     if surname != '':
+        conn = engine.connect()
         stmt = program.update(). \
                where(program.c.LookupID==supporter_id). \
                values(Surname=surname)

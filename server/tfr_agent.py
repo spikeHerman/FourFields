@@ -74,9 +74,10 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         """Provide a supporter to the operator."""
         return tfr_data.provide_supporter(operator_id, program_name)
 
-    def get_supporter_calls(self, operator_id, supporter_id):
+    def get_supporter_calls(self, operator_id, feedback):
         """Get calls made to supporter."""
-        return tfr_data.get_calls(operator_id, supporter_id)
+        supporter_id, program_name = feedback
+        return tfr_data.get_calls(operator_id, supporter_id, program_name)
         
     def uncalled_supporter_to_operator(self, operator_id):
         """Provide an uncalled supporter to the operator."""
