@@ -6,7 +6,7 @@ import servicemanager
 import socket
 import threading
 
-#import tfr_agent
+import tfr_agent
 
 class AppServerSvc (win32serviceutil.ServiceFramework):
     _svc_name_ = "TFRAgent"
@@ -30,7 +30,7 @@ class AppServerSvc (win32serviceutil.ServiceFramework):
         IP = tfr_agent.IP
         PORT = tfr_agent.PORT
         address = (IP, PORT)
-        self.agent = tfr_agent.TFRAgent(address, tfr_agent.ThreadedTCPRequestHandler)
+        self.agent = tfr_agent.ThreadedTCPServer(address, tfr_agent.ThreadedTCPRequestHandler)
         self.agent.serve_forever()
             
 
