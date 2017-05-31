@@ -293,6 +293,7 @@ class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 if __name__ == '__main__':  
         address = (IP, PORT)
         agent = ThreadedTCPServer(address, ThreadedTCPRequestHandler)
+#        agent.serve_forever()
         server_thread = threading.Thread(target=agent.serve_forever)
         server_thread.daemon = True
         server_thread.start()

@@ -23,7 +23,6 @@ class AppServerSvc (win32serviceutil.ServiceFramework):
         self.agent.shutdown()
 
     def SvcDoRun(self):
-        import tfr_agent
         servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,
                               servicemanager.PYS_SERVICE_STARTED,
                               (self._svc_name_,''))

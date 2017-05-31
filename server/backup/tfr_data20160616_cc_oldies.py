@@ -42,9 +42,6 @@ tfrupgrade   = meta.tables['tfrupgrade']
 tfrupgrade2	 = meta.tables['tfrupgrade2']
 tfrupgrade3	 = meta.tables['tfrupgrade3']
 tfrupgrade4	 = meta.tables['tfrupgrade4']
-tfrccoldies  = meta.tables['tfrccoldies']
-tfrddoldies  = meta.tables['tfrddoldies']
-tfrothersoldies = meta.tables['tfrothersoldies']
 
 programs_dict = {'tfrregresccc':tfrregresccc,
                  'tfrexpcc':tfrexpcc,
@@ -57,11 +54,7 @@ programs_dict = {'tfrregresccc':tfrregresccc,
                  'tfrupgrade':tfrupgrade,
 				 'tfrupgrade2':tfrupgrade2,
 				 'tfrupgrade3':tfrupgrade3,
-				 'tfrupgrade4':tfrupgrade4,
-				 'tfrccoldies':tfrccoldies,
-				 'tfrddoldies':tfrddoldies,
-				 'tfrothersoldies':tfrothersoldies}
-				 				 
+				 'tfrupgrade4':tfrupgrade4}
 
 # Auxiliary tables
 tfrcalls     = meta.tables['tfrcalls']
@@ -92,9 +85,6 @@ tfrupgresults    = meta.tables['tfrupgresults']
 tfrupg2results   = meta.tables['tfrupg2results']
 tfrupg3results   = meta.tables['tfrupg3results']
 tfrupg4results   = meta.tables['tfrupg4results']
-tfrccoldresults  = meta.tables['tfrccoldresults']
-tfrddoldresults  = meta.tables['tfrddoldresults']
-tfrothersoldresults = meta.tables['tfrothersoldresults']
 
 results_dict = {'tfrregresccc':tfrccresults,
                 'tfrregrescdd':tfrddresults,
@@ -107,10 +97,7 @@ results_dict = {'tfrregresccc':tfrccresults,
                 'tfrupgrade':tfrupgresults,
 				'tfrupgrade2':tfrupg2results,
 				'tfrupgrade3':tfrupg3results,
-				'tfrupgrade4':tfrupg4results,
-				'tfrccoldies':tfrccoldresults,
-				'tfrddoldies':tfrddoldresults,
-				'tfrothersoldies':tfrothersoldresults}
+				'tfrupgrade4':tfrupg4results}
 
 # DEPRECATED
 # # Scheduled calls
@@ -156,9 +143,6 @@ tfrupginteractions    = meta.tables['tfrupginteractions']
 tfrupg2interactions   = meta.tables['tfrupg2interactions']
 tfrupg3interactions   = meta.tables['tfrupg3interactions']
 tfrupg4interactions   = meta.tables['tfrupg4interactions']
-tfrccoldinteractions  = meta.tables['tfrccoldinteractions']
-tfrddoldinteractions  = meta.tables['tfrddoldinteractions']
-tfrothersoldinteractions = meta.tables['tfrothersoldinteractions']
 
 interactions_dict = {'tfrregresccc':tfrccinteractions,
                      'tfrexpcc':tfrexpinteractions,
@@ -171,10 +155,7 @@ interactions_dict = {'tfrregresccc':tfrccinteractions,
                      'tfrupgrade':tfrupginteractions,
 					 'tfrupgrade2':tfrupg2interactions,
 					 'tfrupgrade3':tfrupg3interactions,
-					 'tfrupgrade4':tfrupg3interactions,
-					 'tfrccoldies':tfrccoldinteractions,
-					 'tfrddoldies':tfrddoldinteractions,
-					 'tfrothersoldies':tfrothersoldinteractions}
+					 'tfrupgrade4':tfrupg3interactions}
 
 def operator_dict():
     """Return operator/password dictionary."""

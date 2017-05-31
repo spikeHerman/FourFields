@@ -14,6 +14,11 @@ from tfr_gui_supporter import no_connection
 
 INTERFACE_COLOR = '#B2D1B2'
 
+operators = {'8-10210799':'pkoutri',
+             '8-10211011':'agrimmani',
+             '8-10232342':'dliritzi',
+             '8-10235551':'dpanou'}
+
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -409,26 +414,38 @@ class Application(tk.Frame):
                               self.program_name_list,
                               self.call_datetime_list,
                               self.comments_list]
+        
+        self.buttons_frame = tk.Frame(self.arranged_frame, pady=6,
+                                      background=INTERFACE_COLOR)
+        self.buttons_frame.grid(row=3, columnspan=4)
 
-        self.arr_button_frame = tk.Frame(self.arranged_frame, pady=6,
+        self.arr_button_frame = tk.Frame(self.buttons_frame, pady=6, padx=6,
                                          background=INTERFACE_COLOR)
-        self.arr_button_frame.grid(row=3, column=2, columnspan=2)
-
+        self.arr_button_frame.grid(row=0, column=1)
         self.arranged_button = tk.Button(self.arr_button_frame,
                                          text="Get call",
                                          command=self.get_scheduled_call,
                                          background=INTERFACE_COLOR)
-        self.arranged_button.grid(row=0, column=0)
+        self.arranged_button.grid()
 
-        self.refr_button_frame = tk.Frame(self.arranged_frame, pady=6,
+        self.all_scheduled_frame = tk.Frame(self.buttons_frame, pady=6, padx=6,
+                                            background=INTERFACE_COLOR)
+        self.all_scheduled_frame.grid(row=0, column=2)
+        self.all_scheduled_button = tk.Button(self.all_scheduled_frame,
+                                              text="See all scheduled calls",
+                                              background=INTERFACE_COLOR,
+                                              command=self.see_all_scheduled)
+        self.all_scheduled_button.grid()
+
+        self.refr_button_frame = tk.Frame(self.buttons_frame, pady=6, padx=6,
                                           background=INTERFACE_COLOR)
-        self.refr_button_frame.grid(row=3, column=1, columnspan=2)
+        self.refr_button_frame.grid(row=0, column=0)
 
         self.refresh_button = tk.Button(self.refr_button_frame, 
                                         text="Refresh List",
                                         command=self.refresh_sch_list,
                                         background=INTERFACE_COLOR)
-        self.refresh_button.grid(row=0, column=0)
+        self.refresh_button.grid()
 
         self.log_separator = ttk.Separator(self.arranged_frame, 
                                            orient=tk.HORIZONTAL)
@@ -499,11 +516,25 @@ class Application(tk.Frame):
             tkMessageBox.showwarning('Scheduled calls', e)
             self.operator.set_scheduled_call_list()
             self.refresh_scheduled_calls()
-
+        
     @no_connection
     def refresh_sch_list(self):
+        """Refreh scheduled call list"""
         self.operator.set_scheduled_call_list()
         self.refresh_scheduled_calls()
+
+    def see_all_scheduled(self):
+        # Create topup window with all scheduled calls
+        AllScheduledDialog(self)
+        # Rebind mousewheel scroll for the application
+        self.master.bind_all('<MouseWheel>', self._on_mousewheel)
+    
+    def _on_mousewheel(self, event):
+        """Apply mousewheel scrolling
+
+        event.delta/120 ensure that scrolling is on a one line basis.
+        """
+        self.master.yview_scroll(-1*(event.delta/120), "units")
 
     def deploy_logout_screen(self):
         """Alternate between the logout screen and the supporter screen."""
@@ -520,6 +551,7 @@ class Application(tk.Frame):
             self.in_logout_screen = True
         
     def create_logout_screen(self):
+        """Create all widgets of logout screen."""
         self.logout_frame = tk.LabelFrame(self, text='Logout Screen',
                                           pady=6, padx=6)
         self.logout_frame.grid(row=0, column=2)
@@ -557,8 +589,7 @@ class Application(tk.Frame):
                                 command=lambda: self.clear(self.prog_list4))
         self.clear4.grid(row=4, column=1)
         
-        ### Start and end time of shift1
-        
+        ### 1st row of input entries for operator report
         self.total_hours_lbl = tk.Label(self.logout_frame, text="Hours")
         self.total_hours_lbl.grid(row=0, column=2)
         self.total_hours1 = tk.Entry(self.logout_frame, width=3)
@@ -604,10 +635,14 @@ class Application(tk.Frame):
         self.device_lbl.grid(row=0, column=13)
         self.device1_entry = tk.Entry(self.logout_frame, width=4)
         self.device1_entry.grid(row=1, column=13)
+        self.no_of_calls1_lbl = tk.Label(self.logout_frame, text="Calls")
+        self.no_of_calls1_lbl.grid(row=0, column=14)
+        self.no_of_calls1_entry = tk.Entry(self.logout_frame, width=5)
+        self.no_of_calls1_entry.grid(row=1, column=14)
 
 
 
-        ### 2nd Package
+        ### 2nd row of entries
         self.total_hours2 = tk.Entry(self.logout_frame, width=3)
         self.total_hours2.grid(row=2, column=2)
         self.total_minutes2 = tk.Entry(self.logout_frame, width=3)
@@ -632,9 +667,11 @@ class Application(tk.Frame):
         self.d_sep2.grid(row=2, column=12)
         self.device2_entry = tk.Entry(self.logout_frame, width=4)
         self.device2_entry.grid(row=2, column=13)
+        self.no_of_calls2_entry = tk.Entry(self.logout_frame, width=5)
+        self.no_of_calls2_entry.grid(row=2, column=14)
    
 
-
+        # 3rd row of entries
         self.total_hours3 = tk.Entry(self.logout_frame, width=3)
         self.total_hours3.grid(row=3, column=2)
         self.total_minutes3 = tk.Entry(self.logout_frame, width=3)
@@ -659,8 +696,11 @@ class Application(tk.Frame):
         self.d_sep3.grid(row=3, column=12)
         self.device3_entry = tk.Entry(self.logout_frame, width=4)
         self.device3_entry.grid(row=3, column=13)
+        self.no_of_calls3_entry = tk.Entry(self.logout_frame, width=5)
+        self.no_of_calls3_entry.grid(row=3, column=14)
 
 
+        # 4rd row of entries
         self.total_hours4 = tk.Entry(self.logout_frame, width=3)
         self.total_hours4.grid(row=4, column=2)
         self.total_minutes4 = tk.Entry(self.logout_frame, width=3)
@@ -685,34 +725,53 @@ class Application(tk.Frame):
         self.d_sep4.grid(row=4, column=12)
         self.device4_entry = tk.Entry(self.logout_frame, width=4)
         self.device4_entry.grid(row=4, column=13)
+        self.no_of_calls4_entry = tk.Entry(self.logout_frame, width=5)
+        self.no_of_calls4_entry.grid(row=4, column=14)
 
         
+        # list of the hour entries
         self.hours_list = [self.total_hours1, 
                            self.total_hours2, 
                            self.total_hours3, 
                            self.total_hours4]
 
+        # list of the minute entries
         self.minutes_list = [self.total_minutes1,
                              self.total_minutes2,
                              self.total_minutes3,
                              self.total_minutes4]
         
-        self.start_end_list = [(self.start_hour1, self.start_min1, self.end_hour1, self.end_min1),
-                               (self.start_hour2, self.start_min2, self.end_hour2, self.end_min2),
-                               (self.start_hour3, self.start_min3, self.end_hour3, self.end_min3),
-                               (self.start_hour4, self.start_min4, self.end_hour4, self.end_min4)]
-
+        # List of the report entry rows
+        self.start_end_list = [(self.start_hour1, self.start_min1, 
+                                self.end_hour1, self.end_min1),
+                               (self.start_hour2, self.start_min2, 
+                                self.end_hour2, self.end_min2),
+                               (self.start_hour3, self.start_min3, 
+                                self.end_hour3, self.end_min3),
+                               (self.start_hour4, self.start_min4, 
+                                self.end_hour4, self.end_min4)]
+        
+        # List of the telephone device that operators report
         self.device_list = [self.device1_entry,
                             self.device2_entry,
                             self.device3_entry,
                             self.device4_entry]
 
+        # list of number of calls entries
+        self.no_of_calls_list = [self.no_of_calls1_entry,
+                                 self.no_of_calls2_entry,
+                                 self.no_of_calls3_entry,
+                                 self.no_of_calls4_entry]
+
+        ### Commit button
         self.commit_button_frame = tk.Frame(self.logout_frame, padx=6, pady=6)
         self.commit_button_frame.grid(row=6, column=0 , columnspan=3)
         self.commit_hours_button = tk.Button(self.commit_button_frame,
                                              text='Commit and exit porgram.',
                                              command=self.commit_shift)
         self.commit_hours_button.grid()
+        
+        # Fill all program lists with available programs.
         self.fill_program_lists()
         
     def clear(self, pr_list):
@@ -730,9 +789,9 @@ class Application(tk.Frame):
     def get_shift_hours(self):
         shifts_list = zip(self.prog_list, self.hours_list, 
                           self.minutes_list, self.start_end_list, 
-                          self.device_list)
+                          self.device_list, self.no_of_calls_list)
         checked_shift_list = []
-        for prog, hour, minute, start_end, dev in shifts_list:
+        for prog, hour, minute, start_end, dev, no_of_calls in shifts_list:
             try:
                 selection = int(prog.curselection()[0])
                 program = prog.get(selection)
@@ -744,8 +803,9 @@ class Application(tk.Frame):
                 e_hour = end_hour.get()
                 e_min = end_min.get()
                 device = dev.get()
-                checked_shift_list.append((program, hours, minutes, s_hour, s_min, e_hour, e_min, device))
-            except IndexError as e:                
+                no_of_calls = no_of_calls.get()
+                checked_shift_list.append((program, hours, minutes, s_hour, s_min, e_hour, e_min, device, no_of_calls))
+            except IndexError as e:
                 pass
         return checked_shift_list
     
@@ -759,7 +819,7 @@ class Application(tk.Frame):
 
     def create_shift_list(self, shift_list):
         returned_list = []
-        for prog, hour, minute, s_hour, s_min, e_hour, e_min, dev in shift_list:
+        for prog, hour, minute, s_hour, s_min, e_hour, e_min, dev, no_of_calls in shift_list:
             try:
                 hour = int(hour)
                 minute = int(minute)
@@ -770,8 +830,9 @@ class Application(tk.Frame):
                 s_time = datetime.time(s_hour, s_min)
                 e_time = datetime.time(e_hour, e_min)
                 device = int(dev)
+                calls_number = int(no_of_calls)
                 self.__check_dev(device)
-                returned_list.append((prog, hour, minute, s_time, e_time, device))
+                returned_list.append((prog, hour, minute, s_time, e_time, device, calls_number))
             except ValueError as e:
                 return False
             except op_exceptions.WrongDeviceError as e:
@@ -796,10 +857,203 @@ class Application(tk.Frame):
                 self.operator.update_shift(shift_list)
                 self.operator.update_calls_made()
                 self.quit()
+                
+class AllScheduledDialog(tk.Toplevel):
+    def __init__(self, parent):
+        tk.Toplevel.__init__(self, parent)
+        self.BOLD = tkFont.Font(family='Times', weight='bold')
+        self.transient(parent)
+        self.title('All Scheduled Calls')        
+        self.parent = parent
+        self.configure(bg=INTERFACE_COLOR)
+        # Bind mousewheel on application level to do nothing
+        # so mousewheel on the AllScheduledDialog doesnt scroll the application
+        self.parent.master.bind_all('<MouseWheel>', self.do_nothing) 
+        
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+100,
+                                  parent.winfo_rooty()+200))
+        self.create_body()
+        self.fill_sch_calls()
+        self.grab_set()
+        self.wait_window(self)    
+
+    def do_nothing(self, event):
+        return None
+
+    def create_body(self):
+        """Create all widgets necessary for AllScheduledDialog"""
+        # height of scheduled calls list.
+        sch_height=15
+        comment_width = self.find_longest_line()
+        self.yScroll = tk.Scrollbar(self, orient=tk.VERTICAL)
+        self.yScroll.grid(row=1, column=5, sticky="ns")
+        self.call_number_lbl = tk.Label(self, text='#', font=self.BOLD,
+                                        bg=INTERFACE_COLOR)
+        self.call_number_lbl.grid(row=0, column=0)
+        self.call_number_list = tk.Listbox(self, height=sch_height, 
+                                           width=4, exportselection=0,
+                                           yscrollcommand=self.yScroll.set)
+        self.call_number_list.grid(row=1, column=0)
+        self.call_number_list.bind('<<ListboxSelect>>', self.onselect)
+        self.call_number_list.bind('<MouseWheel>', self._on_mousewheel)
+        # operator
+        self.operator_lbl = tk.Label(self, text='Op.', font=self.BOLD,
+                                     bg=INTERFACE_COLOR)
+        self.operator_lbl.grid(row=0, column=1)
+        self.operator_list = tk.Listbox(self, height=sch_height, width=7,
+                                        exportselection=0,
+                                        yscrollcommand=self.yScroll.set)
+        self.operator_list.grid(row=1, column=1)
+        self.operator_list.bind('<<ListboxSelect>>', self.onselect)
+        self.operator_list.bind('<MouseWheel>', self._on_mousewheel)
+        # program_name
+        self.program_name_lbl = tk.Label(self, text='Program ', font=self.BOLD,
+                                        bg=INTERFACE_COLOR)
+        self.program_name_lbl.grid(row=0, column=2)
+        self.program_name_list = tk.Listbox(self, height=sch_height,
+                                            width=10, exportselection=0,
+                                            yscrollcommand=self.yScroll.set)
+        self.program_name_list.grid(row=1, column=2)
+        self.program_name_list.bind('<<ListboxSelect>>', self.onselect)
+        self.program_name_list.bind('<MouseWheel>', self._on_mousewheel)
+        # datetime
+        self.datetime_lbl = tk.Label(self, text=' Date  ', font=self.BOLD,
+                                     bg=INTERFACE_COLOR)
+        self.datetime_lbl.grid(row=0, column=3)
+        self.call_datetime_list = tk.Listbox(self, height=sch_height,
+                                             width=10, exportselection=0,
+                                             yscrollcommand=self.yScroll.set)
+        self.call_datetime_list.grid(row=1, column=3)
+        self.call_datetime_list.bind('<<ListboxSelect>>', self.onselect)
+        self.call_datetime_list.bind('<MouseWheel>', self._on_mousewheel)
+        # comments 
+        self.comments_lbl = tk.Label(self, text='Comment', font=self.BOLD,
+                                     bg=INTERFACE_COLOR)
+        self.comments_lbl.grid(row=0, column=4)
+        self.comments_list = tk.Listbox(self, height=sch_height,
+                                        width=self.find_longest_line(),
+                                        exportselection=0,
+                                        yscrollcommand=self.yScroll.set)
+        self.comments_list.grid(row=1, column=4)
+        self.comments_list.bind('<<ListboxSelect>>', self.onselect)
+        self.comments_list.bind('<MouseWheel>', self._on_mousewheel)
+
+        
+        def yview(*args):
+            self.operator_list.yview(*args)
+            self.program_name_list.yview(*args)
+            self.call_datetime_list.yview(*args)
+            self.comments_list.yview(*args)
+            self.call_number_list.yview(*args)
+            
+        self.yScroll.config(command=yview)
+
+        self.sch_listboxes = [self.call_number_list,
+                              self.operator_list,
+                              self.program_name_list,
+                              self.call_datetime_list,
+                              self.comments_list]
+
+
+        ### Refresh List Button
+        self.refresh_frame = tk.Frame(self, padx=6, pady=12,
+                                      bg=INTERFACE_COLOR)
+        self.refresh_frame.grid(row=2, column=0, columnspan=3)
+        self.refresh_button = tk.Button(self.refresh_frame,
+                                   text='Refresh List', bg=INTERFACE_COLOR,
+                                   command=self.refresh_calls)
+        self.refresh_button.grid()
+        ### Get Call Button
+        self.get_call_frame = tk.Frame(self, padx=6, pady=12,
+                                       bg=INTERFACE_COLOR)
+        self.get_call_frame.grid(row=2, column=3)
+        self.get_call_button = tk.Button(self.get_call_frame,
+                                    text='Get Call', bg=INTERFACE_COLOR,
+                                    command=self.get_call)
+        self.get_call_button.grid()
+
+    def _on_mousewheel(self, event):
+        widget = event.widget
+        for wdg in self.sch_listboxes:
+            if wdg is not widget:
+                wdg.yview("scroll", -1*(event.delta/30), "units")
+
+
+    def fill_sch_calls(self):
+        sch_list = self.parent.operator.scheduled_call_list
+        listboxes_height = len(sch_list)
+        for entry in sch_list[:listboxes_height]:
+            for call_tuple in entry:
+                field, value = call_tuple
+                if field == 'operator_id':
+                    user = operators[value]
+                    self.operator_list.insert(tk.END, user)
+                if field == 'scheduled_id':
+                    self.call_number_list.insert(tk.END, value)
+                if field == 'program':
+                    self.program_name_list.insert(tk.END, value)
+                if field == 'datetime':
+                    formatted = value.strftime('%d-%m %H:%M')
+                    self.call_datetime_list.insert(tk.END, formatted)
+                if field == 'operator_comments':
+                    self.comments_list.insert(tk.END, value)
+
+    def onselect(self, event):
+        widget = event.widget
+        index = int(widget.curselection()[0])
+        for wdg in self.sch_listboxes:
+            size = wdg.size()
+            if wdg is not widget:
+                wdg.selection_clear(0, size)
+                wdg.selection_set(index)
+        
+    def find_longest_line(self):
+        sch_list = self.parent.operator.scheduled_call_list
+        longest_line = 0 
+        for entry in sch_list:
+            for call_tuple in entry:
+                field, value = call_tuple
+                if field == 'operator_comments':
+                    if len(value) > longest_line:
+                        longest_line = len(value)
+        return longest_line
+        
+    def refresh_calls(self):
+        self.parent.operator.set_scheduled_call_list()
+        self.parent.refresh_scheduled_calls()
+        self.clear_sch_calls()
+        self.fill_sch_calls()
+
+    def clear_sch_calls(self):
+        for listbox in self.sch_listboxes:
+            listbox.delete(0, tk.END)
+            
+    @no_connection
+    def get_call(self):
+        try:
+            selection = int(self.call_number_list.curselection()[0])
+            call_id = self.call_number_list.get(selection)
+            self.parent.operator.get_scheduled_call(call_id)
+            self.parent.supporter_form.clear_form()
+            self.parent.supporter_form.fill_form()
+            ### Fill comment form with comment from scheduled call
+            self.parent.supporter_form.calls.sch_comments_entry. \
+                insert('0.0', 
+                       self.parent.operator.scheduled_call_comment)
+            self.parent.operator.set_scheduled_call_list()
+            self.parent.refresh_scheduled_calls()
+            self.destroy()
+        except op_exceptions.ScheduledCallError as e:
+            tkMessageBox.showwarning('Scheduled calls', e)
+            self.parent.operator.set_scheduled_call_list()
+            self.parent.refresh_scheduled_calls()
+            self.refresh_calls()
+                
+        
 
 if __name__=='__main__':
     master = tk.Tk()
-    master.title = 'TFR Program'
+    master.title('TFR Program')
 
     frameSizeX = 1073
     frameSizeY = 848
@@ -824,9 +1078,6 @@ if __name__=='__main__':
     canvas.bind_all("<MouseWheel>", _on_mousewheel)
     scrollbar.config(command=canvas.yview)
 
-    def _on_mousewheel(event):
-        canvas.yview_scroll(-1*(event.delta/120), "units")
-
     app = Application(canvas)
     app_id = canvas.create_window(0, 0, window=app,
                                   anchor=tk.NW)
@@ -843,6 +1094,8 @@ if __name__=='__main__':
         canvas.bind('<Configure>', _configure_canvas)
 
     master.mainloop()
+
+    
 
 
         
